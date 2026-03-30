@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\admin\.nuget\packages\vogen\8.0.2\contentFiles\any\netstandard2.0\Vogen.targets" />
+    <Content Remove="C:\Users\admin\.nuget\packages\vogen\8.0.5\contentFiles\any\netstandard2.0\Vogen.targets" />
+  </ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Ardalis.Specification" Version="9.3.1" />
+		<PackageReference Include="Ardalis.Specification.EntityFrameworkCore" Version="9.3.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.5" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.5" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.5">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Vogen" Version="8.0.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Demo.Architecture.Core\Demo.Architecture.Core.csproj" />
+	  <ProjectReference Include="..\Demo.Architecture.UseCases\Demo.Architecture.UseCases.csproj" />
+	</ItemGroup>
+
+</Project>

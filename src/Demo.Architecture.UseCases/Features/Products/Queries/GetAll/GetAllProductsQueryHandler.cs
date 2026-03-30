@@ -1,0 +1,38 @@
+﻿using Demo.Architecture.UseCases.Common.Interfaces;
+using Demo.Architecture.UseCases.Common.Specifications;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using AppModels = Demo.Architecture.UseCases.Common.Models;
+
+namespace Demo.Architecture.UseCases.Features.Products.Queries.GetAll;
+
+public class GetAllProductsQueryHandler(IApplicationDbContext context)
+    : IRequestHandler<GetAllProductsQuery, Result<AppModels.PagedResult<GetAllProductsResponse>>>
+{
+    public async Task<Result<AppModels.PagedResult<GetAllProductsResponse>>> Handle(
+        GetAllProductsQuery request,
+        CancellationToken cancellationToken)
+    {
+        var spec = new GetAllProductsSpecification(request.SearchTerm, request.Sort);
+
+        var query = context.Products
+            .Where(x => x.IsActive)
+            .ApplySpecification(spec);
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var data = await query.Skip(request.Skip).Take(request.PageSize)
+            .Select(x => new GetAllProductsResponse(
+                x.Id.Value,
+                x.Name,
+                x.Price.Value
+            ))
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(new AppModels.PagedResult<GetAllProductsResponse>(
+            data,
+            total,
+            request.Page,
+            request.PageSize));
+    }
+}

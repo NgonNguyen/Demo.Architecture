@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Demo.Architecture.Core/Demo.Architecture.Core.csproj" />
+    <Project Path="src/Demo.Architecture.Infrastructure/Demo.Architecture.Infrastructure.csproj" Id="418fe4c4-2d1a-48c1-a952-7b474f699c93" />
+    <Project Path="src/Demo.Architecture.UseCases/Demo.Architecture.UseCases.csproj" Id="6f0540c2-f83b-475c-9cb2-1c3e7a85af98" />
+    <Project Path="src/Demo.Architecture.WebAPI/Demo.Architecture.WebAPI.csproj" Id="1363ae72-51ff-4b84-a61c-b1983e32b10a" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Demo.Architecture.Test.Domain.UnitTests/Demo.Architecture.Test.Domain.UnitTests.csproj" Id="7055b592-ec05-4341-9571-d08e2601143f" />
+    <Project Path="tests/Demo.Architecture.Test.Infrastructure.IntegrationTests/Demo.Architecture.Test.Infrastructure.IntegrationTests.csproj" Id="8dd24fbd-2b5e-4b8e-9606-6ad8fc776bcb" />
+    <Project Path="tests/Demo.Architecture.Test.Shared/Demo.Architecture.Test.Shared.csproj" Id="772c984e-7f60-4cba-9a77-1bf2aee5b984" />
+    <Project Path="tests/Demo.Architecture.Test.UseCases.UnitTests/Demo.Architecture.Test.UseCases.UnitTests.csproj" Id="18ff1e26-28e2-4526-a846-0455dc0422c7" />
+    <Project Path="tests/Demo.Architecture.Test.WebAPI.IntegrationTests/Demo.Architecture.Test.WebAPI.IntegrationTests.csproj" Id="da10c263-a275-40e8-9cf0-e8ac820e96a1" />
+  </Folder>
+</Solution>
