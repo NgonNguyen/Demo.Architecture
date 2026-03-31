@@ -1,6 +1,9 @@
-﻿using Demo.Architecture.WebAPI.OpenApi.Attributes;
+﻿using Demo.Architecture.WebAPI.Common.Json;
+using Demo.Architecture.WebAPI.OpenApi.Attributes;
 using NSwag.Generation.Processors;
 using NSwag.Generation.Processors.Contexts;
+using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Demo.Architecture.WebAPI.OpenApi.Processors;
 
@@ -26,7 +29,7 @@ public class ResponseExampleOperationProcessor : IOperationProcessor
             if (method == null)
                 continue;
 
-            var example = method.Invoke(provider, null);
+            var exampleObj = method.Invoke(provider, null);
 
             var responses = context.OperationDescription.Operation.Responses;
 
@@ -37,9 +40,33 @@ public class ResponseExampleOperationProcessor : IOperationProcessor
 
             var response = responses[statusCode];
 
-            if (response.Content.ContainsKey("application/json"))
+            if (!response.Content.ContainsKey("application/json"))
+                continue;
+
+            // Serialize the example to JSON using System.Text.Json with camelCase naming
+            // and the Ulid converter, then assign the resulting JsonElement as the example
+            // so the OpenAPI document shows camelCase property names.
+            try
             {
-                response.Content["application/json"].Example = example;
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    WriteIndented = false
+                };
+
+                options.Converters.Add(new UlidJsonConverter());
+
+                var json = JsonSerializer.Serialize(exampleObj, options);
+
+                // Parse to a Newtonsoft JToken so NSwag/Swagger UI will embed the raw JSON
+                // instead of serializing a JsonElement object (which yields { "ValueKind": 1 }).
+                var jtoken = JToken.Parse(json);
+                response.Content["application/json"].Example = jtoken;
+            }
+            catch
+            {
+                // Fallback: assign the raw object if serialization fails
+                response.Content["application/json"].Example = exampleObj;
             }
         }
 

@@ -7,10 +7,10 @@ namespace Demo.Architecture.Test.Shared.Helpers.Products;
 
 public static class ProductTestDataHelper
 {
-    public static AppModels.PagedResult<GetAllProductsResponse> CreatePagedResponse()
+    public static AppModels.PagedResult<GetListProductsResponse> CreatePagedResponse()
     {
-        return new AppModels.PagedResult<GetAllProductsResponse>(
-            new List<GetAllProductsResponse>
+        return new AppModels.PagedResult<GetListProductsResponse>(
+            new List<GetListProductsResponse>
             {
                 new(
                     Ulid.NewUlid(),

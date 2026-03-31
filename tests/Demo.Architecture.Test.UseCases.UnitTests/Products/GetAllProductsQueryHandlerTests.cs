@@ -10,12 +10,12 @@ namespace Demo.Architecture.Test.UseCases.UnitTests.Products;
 [TestFixture]
 public class GetAllProductsQueryHandlerTests : TestBase
 {
-    private GetAllProductsQueryHandler _handler = default!;
+    private GetListProductsQueryHandler _handler = default!;
 
     [SetUp]
     public void Setup()
     {
-        _handler = new GetAllProductsQueryHandler(Context);
+        _handler = new GetListProductsQueryHandler(Context);
     }
 
     // ---------------- BASIC ----------------
@@ -25,7 +25,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     {
         await ProductSeeder.SeedAsync(Context);
 
-        var query = new GetAllProductsQuery();
+        var query = new GetListProductsQuery();
 
         var result = await _handler.Handle(query, CancellationToken.None);
 
@@ -40,7 +40,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     {
         await ProductSeeder.SeedAsync(Context);
 
-        var query = new GetAllProductsQuery
+        var query = new GetListProductsQuery
         {
             SearchTerm = "Product A"
         };
@@ -58,7 +58,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     {
         await ProductSeeder.SeedAsync(Context);
 
-        var query = new GetAllProductsQuery
+        var query = new GetListProductsQuery
         {
             Sort = "name"
         };
@@ -75,7 +75,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     {
         await ProductSeeder.SeedAsync(Context);
 
-        var query = new GetAllProductsQuery
+        var query = new GetListProductsQuery
         {
             Sort = "price"
         };
@@ -92,7 +92,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     {
         await ProductSeeder.SeedAsync(Context);
 
-        var query = new GetAllProductsQuery
+        var query = new GetListProductsQuery
         {
             Sort = "price_desc"
         };
@@ -111,7 +111,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     {
         await ProductSeeder.SeedAsync(Context);
 
-        var query = new GetAllProductsQuery
+        var query = new GetListProductsQuery
         {
             Page = 2,
             PageSize = 2
@@ -134,7 +134,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
         Context.Products.Add(product);
         await Context.SaveChangesAsync();
 
-        var query = new GetAllProductsQuery();
+        var query = new GetListProductsQuery();
 
         var result = await _handler.Handle(query, CancellationToken.None);
 
@@ -146,7 +146,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     [Test]
     public async Task Should_Return_Empty_When_No_Data()
     {
-        var query = new GetAllProductsQuery();
+        var query = new GetListProductsQuery();
 
         var result = await _handler.Handle(query, CancellationToken.None);
 

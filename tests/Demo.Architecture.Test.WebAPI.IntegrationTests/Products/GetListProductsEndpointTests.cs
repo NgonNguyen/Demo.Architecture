@@ -21,7 +21,7 @@ using AppModels = Demo.Architecture.UseCases.Common.Models;
 namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
 
 [TestFixture]
-public class GetAllProductsEndpointTests
+public class GetListProductsEndpointTests
 {
     // ---------------- BASIC ----------------
 
@@ -29,7 +29,7 @@ public class GetAllProductsEndpointTests
     public async Task Should_Return_Ok_When_Query_Succeeds()
     {
         // Arrange
-        var query = new GetAllProductsQuery
+        var query = new GetListProductsQuery
         {
             Page = 1,
             PageSize = 10
@@ -38,8 +38,8 @@ public class GetAllProductsEndpointTests
         var response = ProductTestDataHelper.CreatePagedResponse();
 
         var senderMock = SenderMockHelper.CreateSuccess<
-            GetAllProductsQuery,
-            AppModels.PagedResult<GetAllProductsResponse>>(query, response);
+            GetListProductsQuery,
+            AppModels.PagedResult<GetListProductsResponse>>(query, response);
 
         // Act
         var result = await GetAllProductsEndpoint.Handle(
@@ -49,21 +49,21 @@ public class GetAllProductsEndpointTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().BeOfType<Ok<AppModels.PagedResult<GetAllProductsResponse>>>();
+        result.Should().BeOfType<Ok<AppModels.PagedResult<GetListProductsResponse>>>();
     }
 
     [Test]
     public async Task Should_Call_MediatR_With_Correct_Query()
     {
         // Arrange
-        var query = new GetAllProductsQuery();
+        var query = new GetListProductsQuery();
 
         var response = ProductTestDataHelper.CreatePagedResponse();
 
         var senderMock = new Mock<ISender>();
 
         senderMock
-            .Setup(x => x.Send(It.IsAny<GetAllProductsQuery>(), It.IsAny<CancellationToken>()))
+            .Setup(x => x.Send(It.IsAny<GetListProductsQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Success(response));
 
         // Act
@@ -82,11 +82,11 @@ public class GetAllProductsEndpointTests
     public async Task Should_Return_Problem_When_Result_Fails()
     {
         // Arrange
-        var query = new GetAllProductsQuery();
+        var query = new GetListProductsQuery();
 
         var senderMock = SenderMockHelper.CreateFailure<
-            GetAllProductsQuery,
-            AppModels.PagedResult<GetAllProductsResponse>>(
+            GetListProductsQuery,
+            AppModels.PagedResult<GetListProductsResponse>>(
             query,
             new List<ValidationError>
             {
@@ -139,7 +139,7 @@ public class GetAllProductsEndpointTests
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>();
+            AppModels.PagedResult<GetListProductsResponse>>();
 
         result!.Items.Should().BeEmpty();
     }
@@ -163,7 +163,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=5");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(options);
+            AppModels.PagedResult<GetListProductsResponse>>(options);
 
         result!.Items.Should().HaveCount(5);
     }
@@ -187,7 +187,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=2&pageSize=5");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(options);
+            AppModels.PagedResult<GetListProductsResponse>>(options);
 
         result!.Items.Should().HaveCount(5);
     }
@@ -208,7 +208,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=10");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(options);
+            AppModels.PagedResult<GetListProductsResponse>>(options);
 
         var product = result!.Items.First();
 
@@ -233,7 +233,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=5&searchTerm=laptop");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
 
         result!.Items.Should().HaveCount(2);
     }
@@ -253,7 +253,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=5&searchTerm=LAPTOP");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
 
         result!.Items.Should().HaveCount(1);
     }
@@ -273,7 +273,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=5&searchTerm=xyz");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
 
         result!.Items.Should().BeEmpty();
     }
@@ -294,7 +294,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=5&sort=name");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
 
         result!.Items.Select(x => x.Name)
             .Should().BeInAscendingOrder();
@@ -316,7 +316,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=5&sort=name_desc");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
 
         result!.Items.Select(x => x.Name)
             .Should().BeInDescendingOrder();
@@ -339,7 +339,7 @@ public class GetAllProductsEndpointTests
         var response = await client.GetAsync("/api/products?page=1&pageSize=5&sort=price");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
 
         result!.Items.Select(x => x.Price)
             .Should().BeInAscendingOrder();
@@ -382,7 +382,7 @@ public class GetAllProductsEndpointTests
             "/api/products?searchTerm=laptop&sort=price&page=1&pageSize=2");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetAllProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
 
         result!.Items.Should().HaveCount(2);
         result.Items.Select(x => x.Price).Should().BeInAscendingOrder();

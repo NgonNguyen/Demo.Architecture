@@ -1,34 +1,35 @@
-﻿using Demo.Architecture.UseCases.Common.Models;
-using Demo.Architecture.UseCases.Features.Products.Queries.GetAll;
+﻿using Demo.Architecture.UseCases.Features.Products.Queries.GetById;
 using Demo.Architecture.WebAPI.Common.Endpoints;
 using Demo.Architecture.WebAPI.Extensions;
 using Demo.Architecture.WebAPI.OpenApi.Attributes;
 using Demo.Architecture.WebAPI.OpenApi.Examples.Products;
 using MediatR;
+using Microsoft.OpenApi;
 using NSwag.Annotations;
 
-namespace Demo.Architecture.WebAPI.Features.Products.GetAll;
+namespace Demo.Architecture.WebAPI.Features.Products.GetById;
 
-public class GetAllProductsEndpoint : IEndpointBuilder
+public class GetProductByIdEndpoint : IEndpointBuilder
 {
     public void MapEndpoint(IEndpointRouteBuilder routeBuilder)
     {
         routeBuilder
-            .MapGet("/products", Handle)
-            .WithName("GetAllProducts")
+            .MapGet("/products/{id}", Handle)
+            .WithName("GetProductById")
             .WithTags("Products")
-            .Produces<PagedResult<GetAllProductsResponse>>(StatusCodes.Status200OK)
+            .Produces<GetProductByIdResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 
     [OpenApiOperation(
-        "Get products",
-        "Retrieves a paginated list of products."
+        "Get product by Id",
+        "Retrieves a product filter by Id."
     )]
-    [ResponseExample(typeof(GetAllProductsExampleProvider), 200)]
+    [ResponseExample(typeof(GetProductByIdExampleProvider), 200)]
     internal static async Task<IResult> Handle(
         ISender sender,
-        [AsParameters] GetAllProductsQuery query,
+        [AsParameters] GetProductByIdQuery query,
         CancellationToken cancellationToken)
     {
         var result = await sender.Send(query, cancellationToken);

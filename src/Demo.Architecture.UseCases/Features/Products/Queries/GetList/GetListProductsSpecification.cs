@@ -2,11 +2,11 @@
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.UseCases.Common.Specifications;
 
-namespace Demo.Architecture.UseCases.Features.Products.Queries.GetAll;
+namespace Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 
-public class GetAllProductsSpecification : AppSpecification<Product>
+public class GetListProductsSpecification : AppSpecification<Product>
 {
-    public GetAllProductsSpecification(string? searchTerm, string? sort)
+    public GetListProductsSpecification(string? searchTerm, string? sort)
     {
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
