@@ -1,21 +1,22 @@
 ﻿using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Test.Shared;
+using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Seeders;
-using Demo.Architecture.UseCases.Features.Products.Queries.GetAll;
+using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using FluentAssertions;
 using NUnit.Framework;
 
 namespace Demo.Architecture.Test.UseCases.UnitTests.Products;
 
 [TestFixture]
-public class GetAllProductsQueryHandlerTests : TestBase
+public class GetListProductsHandlerTests : TestBase
 {
-    private GetListProductsQueryHandler _handler = default!;
+    private GetListProductsHandler _handler = default!;
 
     [SetUp]
     public void Setup()
     {
-        _handler = new GetListProductsQueryHandler(Context);
+        _handler = new GetListProductsHandler(Context);
     }
 
     // ---------------- BASIC ----------------
@@ -128,7 +129,7 @@ public class GetAllProductsQueryHandlerTests : TestBase
     [Test]
     public async Task Should_Exclude_Inactive_Products()
     {
-        var product = Product.Create("Product A", 1000).Value;
+        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
         product.Deactivate();
 
         Context.Products.Add(product);

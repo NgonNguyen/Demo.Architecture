@@ -2,6 +2,7 @@
 
 public static class TestConstants
 {
+    public const string ProductsEndpoint = "/api/products";
     public const string ValidProductNameA = "Product A";
     public const string ValidProductNameB = "Product B";
     public const string InvalidProductName = null;

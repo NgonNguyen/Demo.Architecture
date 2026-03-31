@@ -1,5 +1,5 @@
 ﻿using Demo.Architecture.Test.Shared.Constants;
-using Demo.Architecture.UseCases.Features.Products.Queries.GetAll;
+using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using NUlid;
 using AppModels = Demo.Architecture.UseCases.Common.Models;
 

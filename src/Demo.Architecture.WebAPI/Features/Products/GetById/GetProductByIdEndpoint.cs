@@ -4,7 +4,6 @@ using Demo.Architecture.WebAPI.Extensions;
 using Demo.Architecture.WebAPI.OpenApi.Attributes;
 using Demo.Architecture.WebAPI.OpenApi.Examples.Products;
 using MediatR;
-using Microsoft.OpenApi;
 using NSwag.Annotations;
 
 namespace Demo.Architecture.WebAPI.Features.Products.GetById;

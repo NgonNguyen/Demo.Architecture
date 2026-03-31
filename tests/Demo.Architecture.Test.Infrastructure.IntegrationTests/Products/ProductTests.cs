@@ -27,6 +27,48 @@ public class ProductTests : TestBase
         savedProduct.Price.Value.Should().Be(TestConstants.ValidPriceA);
     }
 
+    [Test]
+    public async Task Should_Get_Product_By_Id_From_Database()
+    {
+        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        var found = await Context.Products.FirstAsync(p => p.Id == product.Id);
+
+        found.Should().NotBeNull();
+        found!.Id.Should().Be(product.Id);
+        found.Name.Should().Be(TestConstants.ValidProductNameA);
+        found.Price.Value.Should().Be(TestConstants.ValidPriceA);
+    }
+
+    [Test]
+    public async Task Should_Return_Paged_Products()
+    {
+        // Seed 25 products
+        for (int i = 0; i < 25; i++)
+        {
+            Context.Products.Add(Product.Create($"Product{i:D2}", 100 + i).Value);
+        }
+
+        await Context.SaveChangesAsync();
+
+        var page = 2;
+        var pageSize = 10;
+
+        var items = await Context.Products
+            .OrderBy(p => p.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        var total = await Context.Products.CountAsync();
+
+        items.Should().HaveCount(pageSize);
+        total.Should().Be(25);
+    }
+
     // ---------------- CONVERSIONS ----------------
 
     [Test]

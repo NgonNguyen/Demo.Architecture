@@ -6,8 +6,8 @@ using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Helpers.Products;
 using Demo.Architecture.Test.Shared.Json;
 using Demo.Architecture.Test.Shared.Web;
-using Demo.Architecture.UseCases.Features.Products.Queries.GetAll;
-using Demo.Architecture.WebAPI.Features.Products.GetAll;
+using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
+using Demo.Architecture.WebAPI.Features.Products.GetList;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -122,7 +122,7 @@ public class GetListProductsEndpointTests
         db.SaveChanges();
 
         // Act
-        var response = await client.GetAsync("/api/products?page=1&pageSize=10");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=10");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -134,7 +134,7 @@ public class GetListProductsEndpointTests
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=10");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=10");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -160,7 +160,7 @@ public class GetListProductsEndpointTests
         }
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(options);
@@ -184,7 +184,7 @@ public class GetListProductsEndpointTests
         }
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=2&pageSize=5");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=2&pageSize=5");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(options);
@@ -202,18 +202,18 @@ public class GetListProductsEndpointTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        db.Products.Add(Product.Create("Laptop", 1000).Value);
+        db.Products.Add(Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=10");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=10");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(options);
 
         var product = result!.Items.First();
 
-        product.Name.Should().Be("Laptop");
-        product.Price.Should().Be(1000);
+        product.Name.Should().Be(TestConstants.ValidProductNameA);
+        product.Price.Should().Be(TestConstants.ValidPriceA);
     }
 
     [Test]
@@ -230,7 +230,7 @@ public class GetListProductsEndpointTests
         db.Products.Add(Product.Create("Laptop HP", 900).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5&searchTerm=laptop");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&searchTerm=laptop");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
@@ -250,7 +250,7 @@ public class GetListProductsEndpointTests
         db.Products.Add(Product.Create("Laptop", 1000).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5&searchTerm=LAPTOP");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&searchTerm=LAPTOP");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
@@ -270,7 +270,7 @@ public class GetListProductsEndpointTests
         db.Products.Add(Product.Create("Laptop", 1000).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5&searchTerm=xyz");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&searchTerm=xyz");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
@@ -291,7 +291,7 @@ public class GetListProductsEndpointTests
         db.Products.Add(Product.Create("A Product", 100).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5&sort=name");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&sort=name");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
@@ -313,7 +313,7 @@ public class GetListProductsEndpointTests
         db.Products.Add(Product.Create("B Product", 100).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5&sort=name_desc");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&sort=name_desc");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
@@ -336,7 +336,7 @@ public class GetListProductsEndpointTests
         db.Products.Add(Product.Create("C", 200).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5&sort=price");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&sort=price");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
@@ -358,7 +358,7 @@ public class GetListProductsEndpointTests
         db.Products.Add(Product.Create("B", 200).Value);
         db.SaveChanges();
 
-        var response = await client.GetAsync("/api/products?page=1&pageSize=5&sort=invalid");
+        var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&sort=invalid");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -379,7 +379,7 @@ public class GetListProductsEndpointTests
         db.SaveChanges();
 
         var response = await client.GetAsync(
-            "/api/products?searchTerm=laptop&sort=price&page=1&pageSize=2");
+            $"{TestConstants.ProductsEndpoint}?searchTerm=laptop&sort=price&page=1&pageSize=2");
 
         var result = await response.Content.ReadFromJsonAsync<
             AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
