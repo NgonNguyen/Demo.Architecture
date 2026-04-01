@@ -101,7 +101,7 @@ public class GetListProductsEndpointTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Should().BeOfType<ProblemHttpResult>();
+        result.Should().BeOfType<Architecture.WebAPI.Common.Results.ProblemHttpResult>();
     }
 
     // ---------------- HTTP Client ----------------

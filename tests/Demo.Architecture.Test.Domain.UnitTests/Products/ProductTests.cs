@@ -37,6 +37,8 @@ public class ProductTests
         result.IsSuccess.Should().BeFalse();
 
         result.ValidationErrors.Should().ContainSingle(e =>
+           e.Identifier == ProductErrors.NameRequired.Code);
+        result.ValidationErrors.Should().ContainSingle(e =>
             e.ErrorMessage == ProductErrors.NameRequired.Message);
     }
 
@@ -49,6 +51,8 @@ public class ProductTests
         // Assert
         result.IsSuccess.Should().BeFalse();
 
+        result.ValidationErrors.Should().ContainSingle(e =>
+           e.Identifier == ProductErrors.PriceInvalid.Code);
         result.ValidationErrors.Should().ContainSingle(e =>
             e.ErrorMessage == ProductErrors.PriceInvalid.Message);
     }
@@ -64,9 +68,13 @@ public class ProductTests
 
         result.ValidationErrors.Should().HaveCount(2);
 
+        result.ValidationErrors.Should().ContainSingle(e =>
+           e.Identifier == ProductErrors.NameRequired.Code);
         result.ValidationErrors.Should().Contain(e =>
             e.ErrorMessage == ProductErrors.NameRequired.Message);
 
+        result.ValidationErrors.Should().ContainSingle(e =>
+           e.Identifier == ProductErrors.PriceInvalid.Code);
         result.ValidationErrors.Should().Contain(e =>
             e.ErrorMessage == ProductErrors.PriceInvalid.Message);
     }
