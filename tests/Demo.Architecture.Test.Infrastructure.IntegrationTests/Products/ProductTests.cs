@@ -28,6 +28,23 @@ public class ProductTests : TestBase
     }
 
     [Test]
+    public async Task Can_Update_And_Retrieve()
+    {
+        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
+
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        product.Update(TestConstants.ValidProductNameB, TestConstants.ValidPriceB);
+
+        var savedProduct = await Context.Products.FirstAsync(x => x.Id == product.Id);
+
+        savedProduct.Should().NotBeNull();
+        savedProduct.Name.Should().Be(TestConstants.ValidProductNameB);
+        savedProduct.Price.Value.Should().Be(TestConstants.ValidPriceB);
+    }
+
+    [Test]
     public async Task Should_Get_Product_By_Id_From_Database()
     {
         var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
