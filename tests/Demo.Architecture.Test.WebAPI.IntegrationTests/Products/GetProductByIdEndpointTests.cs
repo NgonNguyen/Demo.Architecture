@@ -1,11 +1,11 @@
 ﻿using Ardalis.Result;
 using Demo.Architecture.Core.Entities.Products;
+using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Json;
 using Demo.Architecture.Test.Shared.Web;
-using Demo.Architecture.UseCases.Features.Products.Errors;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetById;
 using Demo.Architecture.WebAPI.Features.Products.GetById;
 using FluentAssertions;
@@ -137,7 +137,7 @@ public class GetProductByIdEndpointTests
         problem.Detail.Should().Be("Product not found");
         var errorCodeObj = problem.Extensions["errorCode"];
         var errorCode = errorCodeObj is JsonElement je ? je.GetString() : errorCodeObj?.ToString();
-        errorCode.Should().Be(ProductErrors.NotFound);
+        errorCode.Should().Be(ProductErrors.NotFound.Code);
         problem.Instance.Should().Be($"/api/products/{id}");
     }
 }

@@ -11,7 +11,6 @@
     <Folder Include="Features\Orders\Commands\" />
     <Folder Include="Features\Orders\Queries\" />
     <Folder Include="Features\Products\Commands\Delete\" />
-    <Folder Include="Features\Products\Commands\Update\" />
   </ItemGroup>
 
   <ItemGroup>

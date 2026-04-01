@@ -1,6 +1,6 @@
-﻿using Demo.Architecture.UseCases.Common.Interfaces;
+﻿using Demo.Architecture.Core.Errors;
+using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Common.Specifications;
-using Demo.Architecture.UseCases.Features.Products.Errors;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,7 +21,7 @@ public class GetProductByIdHandler(IApplicationDbContext context)
 
         if (product is null)
         {
-            return Result<GetProductByIdResponse>.NotFound(new[] { ProductErrors.NotFound });
+            return Result<GetProductByIdResponse>.NotFound(ProductErrors.NotFound.Code);
         }
 
         var response = GetProductByIdResponse.FromEntity(product);

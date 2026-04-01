@@ -1,8 +1,8 @@
 ﻿using Ardalis.Result;
 using Demo.Architecture.Core.Entities.Products;
+using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Test.Shared;
 using Demo.Architecture.Test.Shared.Constants;
-using Demo.Architecture.UseCases.Features.Products.Errors;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetById;
 using FluentAssertions;
 using NUnit.Framework;
@@ -44,6 +44,6 @@ public class GetProductByIdHandlerTests : TestBase
         result.IsSuccess.Should().BeFalse();
         result.Status.Should().Be(ResultStatus.NotFound);
         result.Errors.Should().NotBeEmpty();
-        result.Errors.Should().Contain(ProductErrors.NotFound);
+        result.Errors.Should().Contain(ProductErrors.NotFound.Code);
     }
 }

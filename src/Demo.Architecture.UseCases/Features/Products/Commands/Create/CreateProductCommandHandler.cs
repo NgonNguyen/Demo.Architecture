@@ -9,10 +9,10 @@ public class CreateProductCommandHandler(IApplicationDbContext context)
     : IRequestHandler<CreateProductCommand, Result<Ulid>>
 {
     public async Task<Result<Ulid>> Handle(
-        CreateProductCommand request,
+        CreateProductCommand command,
         CancellationToken cancellationToken)
     {
-        var result = Product.Create(request.Name, request.Price);
+        var result = Product.Create(command.Name, command.Price);
 
         if (!result.IsSuccess)
             return Result.Invalid(result.ValidationErrors);

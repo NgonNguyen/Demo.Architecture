@@ -8,5 +8,5 @@ public record CreateProductCommand(
     [property: Description("Name of product.")]
     string Name,
     [property: Description("Price of product.")]
-    decimal Price)
-    : IRequest<Result<Ulid>>;
+    decimal Price
+) : IRequest<Result<Ulid>>;

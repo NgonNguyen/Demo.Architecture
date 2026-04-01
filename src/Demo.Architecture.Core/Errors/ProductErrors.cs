@@ -7,4 +7,7 @@ public static class ProductErrors
 
     public static readonly Error PriceInvalid =
         new("PRODUCT_PRICE_INVALID", "Price must be > 0");
+
+    public static readonly Error NotFound =
+        new("PRODUCT_NOT_FOUND", "Product not found");
 }
