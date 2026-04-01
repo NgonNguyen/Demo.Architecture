@@ -119,9 +119,9 @@ public class ProductTests : TestBase
     public void Should_Configure_Name_MaxLength_256() // SQLite not support maxlength
     {
         var entityType = Context.Model.FindEntityType(typeof(Product));
-        var property = entityType.FindProperty(nameof(Product.Name));
+        var property = entityType!.FindProperty(nameof(Product.Name));
 
-        property.GetMaxLength().Should().Be(256);
+        property!.GetMaxLength().Should().Be(256);
         property.IsNullable.Should().BeFalse();
     }
 
@@ -149,10 +149,10 @@ public class ProductTests : TestBase
     public void Should_Configure_Price_Decimal() // SQLite not support decimal precision
     {
         var entityType = Context.Model.FindEntityType(typeof(Product));
-        var property = entityType.FindProperty(nameof(Product.Price));
+        var property = entityType!.FindProperty(nameof(Product.Price));
 
-        property.GetColumnType().Should().Be("decimal(18,2)");
-        property.IsNullable.Should().BeFalse();
+        property!.GetColumnType().Should().Be("decimal(18,2)");
+        property!.IsNullable.Should().BeFalse();
     }
 
     /* SQLServer or other support decimal precision
