@@ -1,9 +1,9 @@
 ﻿using Demo.Architecture.WebAPI.Common.Json;
 using Demo.Architecture.WebAPI.OpenApi.Attributes;
+using Newtonsoft.Json.Linq;
 using NSwag.Generation.Processors;
 using NSwag.Generation.Processors.Contexts;
 using System.Text.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Demo.Architecture.WebAPI.OpenApi.Processors;
 
@@ -69,6 +69,33 @@ public class ResponseExampleOperationProcessor : IOperationProcessor
                 response.Content["application/json"].Example = exampleObj;
             }
         }
+
+            // If no explicit response example provided and the operation defines a 201 response
+            // with a string schema (commonly used for created-id responses like ULID),
+            // set a default example (ULID string) so Swagger shows a useful value.
+            try
+            {
+                var responses = context.OperationDescription.Operation.Responses;
+                var createdStatus = "201";
+                if (responses.ContainsKey(createdStatus))
+                {
+                    var createdResponse = responses[createdStatus];
+
+                    if (createdResponse.Content.ContainsKey("application/json"))
+                    {
+                        var schema = createdResponse.Content["application/json"].Schema;
+                        if (schema != null)
+                        {
+                            var ulid = NUlid.Ulid.NewUlid().ToString();
+                            createdResponse.Content["application/json"].Example = JToken.FromObject(ulid);
+                    }
+                    }
+                }
+            }
+            catch
+            {
+                // ignore
+            }
 
         return true;
     }

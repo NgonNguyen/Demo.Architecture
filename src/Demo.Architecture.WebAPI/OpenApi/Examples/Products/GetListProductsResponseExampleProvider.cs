@@ -4,7 +4,7 @@ using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 
 namespace Demo.Architecture.WebAPI.OpenApi.Examples.Products;
 
-public class GetListProductsExampleProvider
+public class GetListProductsResponseExampleProvider
 {
     public PagedResult<GetListProductsResponse> GetExample()
     {

@@ -25,7 +25,7 @@ public class GetProductByIdEndpoint : IEndpointBuilder
         "Get product by Id",
         "Retrieves a product filter by Id."
     )]
-    [ResponseExample(typeof(GetProductByIdExampleProvider), 200)]
+    [ResponseExample(typeof(GetProductByIdResponseExampleProvider), 200)]
     internal static async Task<IResult> Handle(
         ISender sender,
         [AsParameters] GetProductByIdQuery query,

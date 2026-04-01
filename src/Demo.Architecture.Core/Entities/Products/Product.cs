@@ -26,10 +26,10 @@ public class Product : AppEntityBase<ProductId>, IAggregateRoot
         var errors = new List<ValidationError>();
 
         if (string.IsNullOrWhiteSpace(name))
-            errors.Add(new ValidationError { ErrorMessage = ProductErrors.NameRequired.Message });
+            errors.Add(new ValidationError { Identifier = ProductErrors.NameRequired.Code, ErrorMessage = ProductErrors.NameRequired.Message });
 
         if (price <= 0)
-            errors.Add(new ValidationError { ErrorMessage = ProductErrors.PriceInvalid.Message });
+            errors.Add(new ValidationError { Identifier = ProductErrors.PriceInvalid.Code, ErrorMessage = ProductErrors.PriceInvalid.Message });
 
         if (errors.Any())
             return Result.Invalid(errors);
@@ -44,12 +44,14 @@ public class Product : AppEntityBase<ProductId>, IAggregateRoot
         if (string.IsNullOrWhiteSpace(name))
             errors.Add(new ValidationError
             {
+                Identifier = ProductErrors.NameRequired.Code,
                 ErrorMessage = ProductErrors.NameRequired.Message
             });
 
         if (price <= 0)
             errors.Add(new ValidationError
             {
+                Identifier = ProductErrors.PriceInvalid.Code,
                 ErrorMessage = ProductErrors.PriceInvalid.Message
             });
 

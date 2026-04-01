@@ -3,7 +3,7 @@ using Demo.Architecture.UseCases.Features.Products.Queries.GetById;
 
 namespace Demo.Architecture.WebAPI.OpenApi.Examples.Products;
 
-public class GetProductByIdExampleProvider
+public class GetProductByIdResponseExampleProvider
 {
     public GetProductByIdResponse GetExample() =>
         new(

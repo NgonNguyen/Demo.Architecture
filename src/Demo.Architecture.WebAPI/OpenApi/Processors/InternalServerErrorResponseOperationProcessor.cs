@@ -5,7 +5,7 @@ using NSwag.Generation.Processors.Contexts;
 
 namespace Demo.Architecture.WebAPI.OpenApi.Processors;
 
-public class ProblemDetailsResponseOperationProcessor : IOperationProcessor
+public class InternalServerErrorResponseOperationProcessor : IOperationProcessor
 {
     public bool Process(OperationProcessorContext context)
     {
@@ -29,6 +29,7 @@ public class ProblemDetailsResponseOperationProcessor : IOperationProcessor
                 ["status"] = new JsonSchemaProperty { Type = JsonObjectType.Integer },
                 ["detail"] = new JsonSchemaProperty { Type = JsonObjectType.String },
                 ["instance"] = new JsonSchemaProperty { Type = JsonObjectType.String },
+                ["errorCode"] = new JsonSchemaProperty { Type = JsonObjectType.String },
                 ["traceId"] = new JsonSchemaProperty { Type = JsonObjectType.String }
             }
         };
@@ -40,6 +41,7 @@ public class ProblemDetailsResponseOperationProcessor : IOperationProcessor
             status = 500,
             detail = "An unexpected error occurred.",
             instance = "/api/example",
+            errorCode = "INTERNAL_SERVER_ERROR",
             traceId = "00-abcdef1234567890"
         };
 

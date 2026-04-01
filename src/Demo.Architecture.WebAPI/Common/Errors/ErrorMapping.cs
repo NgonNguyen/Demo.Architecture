@@ -15,4 +15,19 @@ public static class ErrorMapping
             ? message
             : "Unknown error";
     }
+
+    public static bool TryGetCodeByMessage(string message, out string code)
+    {
+        foreach (var kvp in Errors)
+        {
+            if (string.Equals(kvp.Value, message, StringComparison.OrdinalIgnoreCase))
+            {
+                code = kvp.Key;
+                return true;
+            }
+        }
+
+        code = string.Empty;
+        return false;
+    }
 }

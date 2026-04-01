@@ -29,14 +29,50 @@ public static class ResultExtensions
                     }
                 }),
 
-            ResultStatus.Invalid => Results.ValidationProblem(
-                result.ValidationErrors
-                    .GroupBy(e => e.Identifier ?? "Error")
-                    .ToDictionary(
-                        g => g.Key,
-                        g => g.Select(e => e.ErrorMessage).ToArray()
-                    )
-            ),
+            ResultStatus.Invalid =>
+                // Return ProblemDetails with validation errors and error codes so the
+                // front-end can map codes to localized messages. We include an
+                // "errors" extension where each key is the field/identifier and the
+                // value is an array of objects { message, code }.
+                new ProblemHttpResult(
+                    new ProblemDetails
+                    {
+                        Title = "Validation Error",
+                        Status = StatusCodes.Status400BadRequest,
+                        Detail = "One or more validation errors occurred.",
+                        Extensions =
+                        {
+                            ["errors"] = result.ValidationErrors
+                                .Select(ev =>
+                                {
+                                    // code is the identifier when available
+                                    var codeVal = ev.Identifier ?? "Error";
+
+                                    // derive field name from error code when possible (eg. PRODUCT_PRICE_INVALID -> price)
+                                    string field;
+                                    if (!string.IsNullOrEmpty(ev.Identifier) && ev.Identifier.Contains("_"))
+                                    {
+                                        var parts = ev.Identifier.Split('_');
+                                        if (parts.Length >= 2)
+                                            field = parts[1].ToLowerInvariant();
+                                        else
+                                            field = "Error";
+                                    }
+                                    else
+                                    {
+                                        field = "Error";
+                                    }
+
+                                    return new
+                                    {
+                                        field,
+                                        message = ev.ErrorMessage,
+                                        code = codeVal
+                                    };
+                                }).ToArray()
+                        }
+                    }
+                ),
 
             ResultStatus.Error => new ProblemHttpResult(
                 new ProblemDetails

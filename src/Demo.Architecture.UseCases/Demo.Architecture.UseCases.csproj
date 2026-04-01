@@ -10,12 +10,14 @@
     <Folder Include="Common\Behaviors\" />
     <Folder Include="Features\Orders\Commands\" />
     <Folder Include="Features\Orders\Queries\" />
-    <Folder Include="Features\Products\Commands\" />
+    <Folder Include="Features\Products\Commands\Delete\" />
+    <Folder Include="Features\Products\Commands\Update\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Ardalis.Result" Version="10.1.0" />
     <PackageReference Include="Ardalis.SharedKernel" Version="5.0.0" />
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="MediatR" Version="14.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.9" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />

@@ -25,7 +25,7 @@ public class GetAllProductsEndpoint : IEndpointBuilder
         "Get products",
         "Retrieves a paginated list of products."
     )]
-    [ResponseExample(typeof(GetListProductsExampleProvider), 200)]
+    [ResponseExample(typeof(GetListProductsResponseExampleProvider), 200)]
     internal static async Task<IResult> Handle(
         ISender sender,
         [AsParameters] GetListProductsQuery query,

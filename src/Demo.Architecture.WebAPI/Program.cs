@@ -59,8 +59,10 @@ builder.Services.AddOpenApiDocument(config =>
     config.Title = "Demo Architecture API";
 
     config.UseControllerSummaryAsTagDescription = true;
-    config.OperationProcessors.Add(new ProblemDetailsResponseOperationProcessor());
+    config.OperationProcessors.Add(new InternalServerErrorResponseOperationProcessor());
     config.OperationProcessors.Add(new ResponseExampleOperationProcessor());
+    config.OperationProcessors.Add(new RequestExampleOperationProcessor());
+    config.OperationProcessors.Add(new NotFoundResponseOperationProcessor());
     config.OperationProcessors.Add(new QueryExampleOperationProcessor());
 });
 
