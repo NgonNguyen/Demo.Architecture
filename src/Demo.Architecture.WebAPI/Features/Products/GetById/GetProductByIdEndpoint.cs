@@ -17,7 +17,7 @@ public class GetProductByIdEndpoint : IEndpointBuilder
             .WithName("GetProductById")
             .WithTags("Products")
             .Produces<GetProductByIdResponse>(StatusCodes.Status200OK)
-            .Produces(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 

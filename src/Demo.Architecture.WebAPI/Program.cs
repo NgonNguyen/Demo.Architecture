@@ -10,8 +10,17 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddProblemDetails(); // optional
+
+builder.Services.AddProblemDetails(options =>
+{
+    options.CustomizeProblemDetails = context =>
+    {
+        context.ProblemDetails.Instance =
+            context.HttpContext.Request.Path;
+    };
+});
 
 // -----------------------------
 // MediatR
@@ -60,6 +69,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.Converters.Add(new UlidJsonConverter());
 });
+
+builder.Services.AddOpenTelemetry();
 
 // -----------------------------
 var app = builder.Build();

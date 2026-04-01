@@ -5,10 +5,12 @@ using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Json;
 using Demo.Architecture.Test.Shared.Web;
+using Demo.Architecture.UseCases.Features.Products.Errors;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetById;
 using Demo.Architecture.WebAPI.Features.Products.GetById;
 using FluentAssertions;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -16,6 +18,7 @@ using NUlid;
 using NUnit.Framework;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
 
@@ -125,5 +128,16 @@ public class GetProductByIdEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        var problem = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>(JsonOptionsHelper.Create());
+
+        problem.Should().NotBeNull();
+        problem!.Title.Should().Be("Not Found");
+        problem.Status.Should().Be(StatusCodes.Status404NotFound);
+        problem.Detail.Should().Be("Product not found");
+        var errorCodeObj = problem.Extensions["errorCode"];
+        var errorCode = errorCodeObj is JsonElement je ? je.GetString() : errorCodeObj?.ToString();
+        errorCode.Should().Be(ProductErrors.NotFound);
+        problem.Instance.Should().Be($"/api/products/{id}");
     }
 }

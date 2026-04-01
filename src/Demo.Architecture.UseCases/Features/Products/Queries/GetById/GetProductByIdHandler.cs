@@ -1,5 +1,6 @@
 ﻿using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Common.Specifications;
+using Demo.Architecture.UseCases.Features.Products.Errors;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,10 +18,11 @@ public class GetProductByIdHandler(IApplicationDbContext context)
         var product = await context.Products
             .ApplySpecification(spec)
             .FirstOrDefaultAsync(cancellationToken);
-        // .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
 
         if (product is null)
-            return Result.NotFound();
+        {
+            return Result<GetProductByIdResponse>.NotFound(new[] { ProductErrors.NotFound });
+        }
 
         var response = GetProductByIdResponse.FromEntity(product);
 

@@ -1,4 +1,5 @@
-﻿using NSwag.Generation.Processors;
+﻿using NUlid;
+using NSwag.Generation.Processors;
 using NSwag.Generation.Processors.Contexts;
 
 namespace Demo.Architecture.WebAPI.OpenApi.Processors;
@@ -25,6 +26,10 @@ public class QueryExampleOperationProcessor : IOperationProcessor
 
                 case "sort":
                     parameter.Example = "name_desc";
+                    break;
+
+                case "id":
+                    parameter.Example = Ulid.NewUlid().ToString();
                     break;
             }
         }

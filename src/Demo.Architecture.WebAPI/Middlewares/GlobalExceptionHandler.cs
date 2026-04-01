@@ -1,28 +1,28 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Demo.Architecture.WebAPI.Middlewares;
 
 public class GlobalExceptionHandler(
-    ILogger<GlobalExceptionHandler> _logger,
-    IProblemDetailsService _problemDetailsService) 
-        : IExceptionHandler
+    ILogger<GlobalExceptionHandler> logger,
+    IProblemDetailsService problemDetailsService)
+    : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(
         HttpContext context,
         Exception exception,
         CancellationToken cancellationToken)
     {
-        var traceId = context.TraceIdentifier;
+        var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
 
-        _logger.LogError(exception,
+        logger.LogError(exception,
             "Unhandled Exception. TraceId: {TraceId}", traceId);
 
         var statusCode = exception switch
         {
             ValidationException => StatusCodes.Status400BadRequest,
-            KeyNotFoundException => StatusCodes.Status404NotFound,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             _ => StatusCodes.Status500InternalServerError
         };
@@ -31,7 +31,7 @@ public class GlobalExceptionHandler(
         {
             Title = statusCode == 500
                 ? "Internal Server Error"
-                : exception.GetType().Name,
+                : "Request Error",
 
             Status = statusCode,
             Detail = statusCode == 500
@@ -42,10 +42,14 @@ public class GlobalExceptionHandler(
         };
 
         problemDetails.Extensions["traceId"] = traceId;
+        problemDetails.Extensions["errorCode"] =
+            statusCode == 500
+                ? "INTERNAL_SERVER_ERROR"
+                : "REQUEST_ERROR";
 
         context.Response.StatusCode = statusCode;
 
-        await _problemDetailsService.WriteAsync(new ProblemDetailsContext
+        await problemDetailsService.WriteAsync(new ProblemDetailsContext
         {
             HttpContext = context,
             ProblemDetails = problemDetails
