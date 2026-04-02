@@ -2,6 +2,7 @@
 using Demo.Architecture.Core.Errors;
 using Demo.Architecture.UseCases.Common.Interfaces;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Demo.Architecture.UseCases.Features.Products.Commands.Update;
 
@@ -14,7 +15,7 @@ public class UpdateProductCommandHandler(IApplicationDbContext context)
     {
         var productId = ProductId.From(command.Id);
         var product = await context.Products
-            .FindAsync(productId, cancellationToken);
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
 
         if (product is null)
             return Result.NotFound(ProductErrors.NotFound.Code);

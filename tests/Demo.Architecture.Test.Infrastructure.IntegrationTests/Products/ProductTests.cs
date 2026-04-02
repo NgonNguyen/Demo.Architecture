@@ -99,8 +99,8 @@ public class ProductTests : TestBase
         await Context.SaveChangesAsync();
 
         // Assert
-        var deactivated = await Context.Products.FirstAsync(p => p.Id == product.Id);
-        deactivated.IsActive.Should().BeFalse();
+        var deactivated = await Context.Products.FirstOrDefaultAsync(p => p.Id == product.Id);
+        deactivated.Should().BeNull();
     }
 
     [Test]

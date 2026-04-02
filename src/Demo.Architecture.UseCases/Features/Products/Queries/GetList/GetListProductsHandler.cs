@@ -16,7 +16,6 @@ public class GetListProductsHandler(IApplicationDbContext context)
         var spec = new GetListProductsSpecification(request.SearchTerm, request.Sort);
 
         var query = context.Products
-            .Where(x => x.IsActive)
             .ApplySpecification(spec);
 
         var total = await query.CountAsync(cancellationToken);

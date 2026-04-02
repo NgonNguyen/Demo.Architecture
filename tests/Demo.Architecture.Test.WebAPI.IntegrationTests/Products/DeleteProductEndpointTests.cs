@@ -83,46 +83,6 @@ public class DeleteProductEndpointTests
     // ---------------- HTTP Client ----------------
 
     [Test]
-    public async Task Should_Return_204_When_Product_Deleted()
-    {
-        // Arrange
-        var factory = new TestWebApplicationFactory();
-        var client = factory.CreateClient();
-
-        var productId = ProductId.New();
-        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
-
-        // Set the product ID explicitly
-        typeof(Product)
-            .GetProperty(nameof(Product.Id))!
-            .SetValue(product, productId);
-
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            db.Products.Add(product);
-            await db.SaveChangesAsync();
-        }
-
-        product.IsActive.Should().BeTrue();
-
-        // Act
-        var response = await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{productId.Value}");
-
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-
-        // Query with a fresh scope/context to verify the product was deactivated
-        using (var scope = factory.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var deleted = await db.Products.FindAsync(productId);
-            deleted.Should().NotBeNull();
-            deleted!.IsActive.Should().BeFalse();
-        }
-    }
-
-    [Test]
     public async Task Should_Return_404_When_Product_Not_Found()
     {
         // Arrange

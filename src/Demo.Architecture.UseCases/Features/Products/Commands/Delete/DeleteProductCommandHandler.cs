@@ -16,7 +16,6 @@ public class DeleteProductCommandHandler(IApplicationDbContext context)
         var productId = ProductId.From(command.Id);
 
         var product = await context.Products
-            .Where(x => x.IsActive)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
 
         if (product is null)
