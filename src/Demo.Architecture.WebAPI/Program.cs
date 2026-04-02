@@ -1,12 +1,16 @@
+using Demo.Architecture.Infrastructure.Caching;
 using Demo.Architecture.Infrastructure.Data;
-using System.Text.Json;
+using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using Demo.Architecture.WebAPI.Common.Endpoints;
 using Demo.Architecture.WebAPI.Common.Json;
 using Demo.Architecture.WebAPI.Middlewares;
 using Demo.Architecture.WebAPI.OpenApi.Processors;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +31,15 @@ builder.Services.AddProblemDetails(options =>
 // -----------------------------
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(GetListProductsQuery).Assembly));
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = builder.Configuration.GetConnectionString("Redis");
+    return ConnectionMultiplexer.Connect(configuration);
+});
+
+builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
+builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
 
 // -----------------------------
 // Database (SQLite)

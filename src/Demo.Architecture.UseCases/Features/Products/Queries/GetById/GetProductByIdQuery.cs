@@ -1,4 +1,5 @@
 ﻿using Demo.Architecture.Core.Entities.Products;
+using Demo.Architecture.UseCases.Common.Caching;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel;
@@ -9,4 +10,9 @@ public sealed record GetProductByIdQuery(
     [FromRoute(Name = "id")]
     [Description("An identifier for a product.")]
     ProductId Id
-) : IRequest<Result<GetProductByIdResponse>>;
+) : IRequest<Result<GetProductByIdResponse>>, ICacheableQuery
+{
+    public string CacheKey => $"product:{Id}";
+
+    public TimeSpan? Expiration => TimeSpan.FromMinutes(10);
+}

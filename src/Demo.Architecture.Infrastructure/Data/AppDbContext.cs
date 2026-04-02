@@ -1,5 +1,4 @@
-﻿using Demo.Architecture.Core.Base;
-using Demo.Architecture.Core.Base.Interfaces;
+﻿using Demo.Architecture.Core.Base.Interfaces;
 using Demo.Architecture.Core.Entities.Orders;
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.UseCases.Common.Interfaces;
