@@ -16,6 +16,7 @@ public class GetProductByIdHandler(IApplicationDbContext context)
         var spec = new GetProductByIdSpecification(request.Id);
 
         var product = await context.Products
+            .Where(x => x.IsActive)
             .ApplySpecification(spec)
             .FirstOrDefaultAsync(cancellationToken);
 

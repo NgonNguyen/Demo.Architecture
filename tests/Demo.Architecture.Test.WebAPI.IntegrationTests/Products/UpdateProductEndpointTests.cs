@@ -47,7 +47,7 @@ public class UpdateProductEndpointTests
             CancellationToken.None);
 
         result.Should().NotBeNull();
-        result.Should().BeOfType<Ok>();
+        result.Should().BeOfType<NoContent>();
     }
 
     [Test]
@@ -193,7 +193,7 @@ public class UpdateProductEndpointTests
                 price = TestConstants.ValidPriceB
             });
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
     [Test]

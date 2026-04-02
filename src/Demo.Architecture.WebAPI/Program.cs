@@ -63,6 +63,7 @@ builder.Services.AddOpenApiDocument(config =>
     config.OperationProcessors.Add(new ResponseExampleOperationProcessor());
     config.OperationProcessors.Add(new RequestExampleOperationProcessor());
     config.OperationProcessors.Add(new NotFoundResponseOperationProcessor());
+    config.OperationProcessors.Add(new BadRequestResponseOperationProcessor());
     config.OperationProcessors.Add(new QueryExampleOperationProcessor());
 });
 

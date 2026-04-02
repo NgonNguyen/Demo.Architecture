@@ -10,7 +10,6 @@
     <Folder Include="Common\Behaviors\" />
     <Folder Include="Features\Orders\Commands\" />
     <Folder Include="Features\Orders\Queries\" />
-    <Folder Include="Features\Products\Commands\Delete\" />
   </ItemGroup>
 
   <ItemGroup>

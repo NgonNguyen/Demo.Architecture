@@ -173,4 +173,39 @@ public class ProductTests
         product.Name.Should().Be(TestConstants.ValidProductNameA);
         product.Price.Value.Should().Be(TestConstants.ValidPriceA);
     }
+
+    // ---------------- DEACTIVATE ----------------
+
+    [Test]
+    public void Deactivate_Should_Set_IsActive_To_False()
+    {
+        // Arrange
+        var product = new ProductBuilder().Build();
+        product.IsActive.Should().BeTrue();
+
+        // Act
+        product.Deactivate();
+
+        // Assert
+        product.IsActive.Should().BeFalse();
+    }
+
+    [Test]
+    public void Deactivate_Should_Preserve_Product_Data()
+    {
+        // Arrange
+        var product = new ProductBuilder().Build();
+        var originalName = product.Name;
+        var originalPrice = product.Price;
+        var originalId = product.Id;
+
+        // Act
+        product.Deactivate();
+
+        // Assert
+        product.Id.Should().Be(originalId);
+        product.Name.Should().Be(originalName);
+        product.Price.Should().Be(originalPrice);
+        product.IsActive.Should().BeFalse();
+    }
 }

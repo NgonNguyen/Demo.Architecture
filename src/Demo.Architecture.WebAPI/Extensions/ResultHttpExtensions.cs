@@ -89,4 +89,78 @@ public static class ResultExtensions
             _ => Results.BadRequest()
         };
     }
+
+    // Overload for non-generic Result (e.g., from DELETE operations)
+    public static Microsoft.AspNetCore.Http.IResult ToHttpResult(this Result result)
+    {
+        if (result.IsSuccess)
+            return Results.NoContent(); // 204 for successful DELETE operations
+
+        return result.Status switch
+        {
+            ResultStatus.NotFound => new ProblemHttpResult(
+                new ProblemDetails
+                {
+                    Title = "Not Found",
+                    Status = StatusCodes.Status404NotFound,
+                    Detail = "Resource not found",
+                    Extensions =
+                    {
+                        ["errorCode"] = "NOT_FOUND"
+                    }
+                }),
+
+            ResultStatus.Invalid =>
+                new ProblemHttpResult(
+                    new ProblemDetails
+                    {
+                        Title = "Validation Error",
+                        Status = StatusCodes.Status400BadRequest,
+                        Detail = "One or more validation errors occurred.",
+                        Extensions =
+                        {
+                            ["errors"] = result.ValidationErrors
+                                .Select(ev =>
+                                {
+                                    var codeVal = ev.Identifier ?? "Error";
+                                    string field;
+                                    if (!string.IsNullOrEmpty(ev.Identifier) && ev.Identifier.Contains("_"))
+                                    {
+                                        var parts = ev.Identifier.Split('_');
+                                        if (parts.Length >= 2)
+                                            field = parts[1].ToLowerInvariant();
+                                        else
+                                            field = "Error";
+                                    }
+                                    else
+                                    {
+                                        field = "Error";
+                                    }
+
+                                    return new
+                                    {
+                                        field,
+                                        message = ev.ErrorMessage,
+                                        code = codeVal
+                                    };
+                                }).ToArray()
+                        }
+                    }
+                ),
+
+            ResultStatus.Error => new ProblemHttpResult(
+                new ProblemDetails
+                {
+                    Title = "Internal Server Error",
+                    Status = StatusCodes.Status500InternalServerError,
+                    Detail = "An unexpected error occurred.",
+                    Extensions =
+                    {
+                        ["errorCode"] = "INTERNAL_SERVER_ERROR"
+                    }
+                }),
+
+            _ => Results.BadRequest()
+        };
+    }
 }

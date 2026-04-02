@@ -56,6 +56,28 @@ public class CreateProductEndpointTests
     }
 
     [Test]
+    public async Task Should_Return_Problem_When_Validation_Fails()
+    {
+
+        var command = new CreateProductCommand(string.Empty, 0);
+
+        var senderMock = SenderMockHelper.CreateFailure<CreateProductCommand, Ulid>(
+            command,
+            new List<ValidationError>
+            {
+                new() { ErrorMessage = "Invalid" }
+            });
+
+        var result = await CreateProductEndpoint.Handle(
+            senderMock.Object,
+            command,
+            CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Should().BeOfType<Architecture.WebAPI.Common.Results.ProblemHttpResult>();
+    }
+
+    [Test]
     public async Task Should_Return_Problem_When_Result_Fails()
     {
         var command = new CreateProductCommand(string.Empty, 0);

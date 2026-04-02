@@ -86,6 +86,48 @@ public class ProductTests : TestBase
         total.Should().Be(25);
     }
 
+    [Test]
+    public async Task Should_Deactivate_Product()
+    {
+        // Arrange
+        var product = Product.Create("Deletable Product", 150).Value;
+        Context.Products.Add(product);
+        await Context.SaveChangesAsync();
+
+        // Act
+        product.Deactivate();
+        await Context.SaveChangesAsync();
+
+        // Assert
+        var deactivated = await Context.Products.FirstAsync(p => p.Id == product.Id);
+        deactivated.IsActive.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task Should_Exclude_Deactivated_Products_From_Active_Query()
+    {
+        // Arrange
+        var activeProduct = Product.Create("Active Product", 100).Value;
+        var inactiveProduct = Product.Create("Inactive Product", 200).Value;
+
+        Context.Products.Add(activeProduct);
+        Context.Products.Add(inactiveProduct);
+        await Context.SaveChangesAsync();
+
+        inactiveProduct.Deactivate();
+        await Context.SaveChangesAsync();
+
+        // Act
+        var activeProducts = await Context.Products
+            .Where(p => p.IsActive)
+            .ToListAsync();
+
+        // Assert
+        activeProducts.Should().HaveCount(1);
+        activeProducts.Should().NotContain(p => p.Id == inactiveProduct.Id);
+        activeProducts.Should().Contain(p => p.Id == activeProduct.Id);
+    }
+
     // ---------------- CONVERSIONS ----------------
 
     [Test]

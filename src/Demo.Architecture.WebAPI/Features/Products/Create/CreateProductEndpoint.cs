@@ -18,6 +18,7 @@ public class CreateProductEndpoint : IEndpointBuilder
             .WithName("CreateProduct")
             .WithTags("Products")
             .Produces<Ulid>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status500InternalServerError);
     }
 
