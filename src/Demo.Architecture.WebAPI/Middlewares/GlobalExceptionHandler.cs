@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Diagnostics;
+﻿using Demo.Architecture.UseCases.Common.Exceptions;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
 namespace Demo.Architecture.WebAPI.Middlewares;
@@ -20,34 +20,65 @@ public class GlobalExceptionHandler(
         logger.LogError(exception,
             "Unhandled Exception. TraceId: {TraceId}", traceId);
 
-        var statusCode = exception switch
+        ProblemDetails problemDetails;
+
+        switch (exception)
         {
-            ValidationException => StatusCodes.Status400BadRequest,
-            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-            _ => StatusCodes.Status500InternalServerError
-        };
+            case ApiValidationException apiValidationEx:
+                context.Response.StatusCode = StatusCodes.Status400BadRequest;
 
-        var problemDetails = new ProblemDetails
-        {
-            Title = statusCode == 500
-                ? "Internal Server Error"
-                : "Request Error",
+                problemDetails = new ProblemDetails
+                {
+                    Title = "Validation Error",
+                    Status = StatusCodes.Status400BadRequest,
+                    Detail = apiValidationEx.Message,
+                    Instance = context.Request.Path
+                };
+                
+                problemDetails.Extensions["errors"] = apiValidationEx.Failures.Select(error => new
+                {
+                    field = error.PropertyName,
+                    message = error.ErrorMessage,
+                    code = string.IsNullOrEmpty(error.ErrorCode)
+                        ? $"{error.PropertyName.ToUpperInvariant()}_VALIDATION_ERROR"
+                        : error.ErrorCode
+                });
+                problemDetails.Extensions["traceId"] = traceId;
 
-            Status = statusCode,
-            Detail = statusCode == 500
-                ? "An unexpected error occurred."
-                : exception.Message,
+                break;
 
-            Instance = context.Request.Path
-        };
+            case UnauthorizedAccessException:
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 
-        problemDetails.Extensions["traceId"] = traceId;
-        problemDetails.Extensions["errorCode"] =
-            statusCode == 500
-                ? "INTERNAL_SERVER_ERROR"
-                : "REQUEST_ERROR";
+                problemDetails = new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Status = StatusCodes.Status401Unauthorized,
+                    Detail = exception.Message,
+                    Instance = context.Request.Path
+                };
 
-        context.Response.StatusCode = statusCode;
+                problemDetails.Extensions["traceId"] = traceId;
+                problemDetails.Extensions["errorCode"] = "UNAUTHORIZED";
+
+                break;
+
+            default:
+                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+                problemDetails = new ProblemDetails
+                {
+                    Title = "Internal Server Error",
+                    Status = StatusCodes.Status500InternalServerError,
+                    Detail = "An unexpected error occurred.",
+                    Instance = context.Request.Path
+                };
+
+                problemDetails.Extensions["traceId"] = traceId;
+                problemDetails.Extensions["errorCode"] = "INTERNAL_SERVER_ERROR";
+
+                break;
+        }
 
         await problemDetailsService.WriteAsync(new ProblemDetailsContext
         {

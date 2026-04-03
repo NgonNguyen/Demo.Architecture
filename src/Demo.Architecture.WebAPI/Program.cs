@@ -1,12 +1,16 @@
 using Demo.Architecture.Infrastructure.Caching;
 using Demo.Architecture.Infrastructure.Data;
+using Demo.Architecture.Infrastructure.Features.Products;
 using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Interfaces;
+using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
+using Demo.Architecture.UseCases.Features.Products.Rules;
 using Demo.Architecture.WebAPI.Common.Endpoints;
 using Demo.Architecture.WebAPI.Common.Json;
 using Demo.Architecture.WebAPI.Middlewares;
 using Demo.Architecture.WebAPI.OpenApi.Processors;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
@@ -38,10 +42,15 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(configuration!);
 });
 
+builder.Services.AddScoped<IProductUniquenessChecker, ProductUniquenessChecker>();
+
+builder.Services.AddValidatorsFromAssembly(typeof(IProductUniquenessChecker).Assembly);
+
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 if (!builder.Environment.IsEnvironment("Test"))
 {
+    builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
     builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(CacheInvalidationBehavior<,>));
 }

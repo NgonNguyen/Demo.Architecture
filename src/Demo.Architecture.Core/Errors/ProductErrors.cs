@@ -10,4 +10,7 @@ public static class ProductErrors
 
     public static readonly Error NotFound =
         new("PRODUCT_NOT_FOUND", "Product not found");
+
+    public static readonly Error DuplicatedName =
+        new("PRODUCT_NAME_DUPLICATED", "Product name already exists.");
 }
