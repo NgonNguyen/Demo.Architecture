@@ -5,8 +5,9 @@ using Demo.Architecture.Infrastructure.Serialization;
 
 namespace Demo.Architecture.Infrastructure.Caching;
 
-public class RedisCacheService : IRedisCacheService
+public class RedisCacheService : ICacheService
 {
+    private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _db;
     private static readonly JsonSerializerOptions _options = new()
     {
@@ -16,6 +17,7 @@ public class RedisCacheService : IRedisCacheService
 
     public RedisCacheService(IConnectionMultiplexer redis)
     {
+        _redis = redis;
         _db = redis.GetDatabase();
     }
 
@@ -43,5 +45,17 @@ public class RedisCacheService : IRedisCacheService
     public async Task RemoveAsync(string key)
     {
         await _db.KeyDeleteAsync(key);
+    }
+
+    public async Task RemoveByPatternAsync(string pattern)
+    {
+        var server = _redis.GetServer(_redis.GetEndPoints().First());
+
+        var keys = server.Keys(pattern: pattern);
+
+        foreach (var key in keys)
+        {
+            await _db.KeyDeleteAsync(key);
+        }
     }
 }

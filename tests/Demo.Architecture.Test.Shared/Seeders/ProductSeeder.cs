@@ -17,4 +17,16 @@ public static class ProductSeeder
         context.Products.AddRange(products);
         await context.SaveChangesAsync();
     }
+
+    public static async Task SeedMoreAsync(AppDbContext context)
+    {
+        var products = new List<Product>
+        {
+            Product.Create("Product D", 2000).Value,
+            Product.Create("Product E", 3000).Value
+        };
+
+        context.Products.AddRange(products);
+        await context.SaveChangesAsync();
+    }
 }

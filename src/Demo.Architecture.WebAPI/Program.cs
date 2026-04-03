@@ -35,11 +35,16 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var configuration = builder.Configuration.GetConnectionString("Redis");
-    return ConnectionMultiplexer.Connect(configuration);
+    return ConnectionMultiplexer.Connect(configuration!);
 });
 
-builder.Services.AddScoped<IRedisCacheService, RedisCacheService>();
-builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
+builder.Services.AddScoped<ICacheService, RedisCacheService>();
+
+if (!builder.Environment.IsEnvironment("Test"))
+{
+    builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
+    builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(CacheInvalidationBehavior<,>));
+}
 
 // -----------------------------
 // Database (SQLite)

@@ -7,9 +7,9 @@ namespace Demo.Architecture.UseCases.Common.Behaviors;
 public class CachingBehavior<TRequest, TResponse>
     : IPipelineBehavior<TRequest, TResponse>
 {
-    private readonly IRedisCacheService _cache;
+    private readonly ICacheService _cache;
 
-    public CachingBehavior(IRedisCacheService cache)
+    public CachingBehavior(ICacheService cache)
     {
         _cache = cache;
     }

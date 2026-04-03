@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using Demo.Architecture.UseCases.Common.Caching;
+using MediatR;
 using NUlid;
 using System.ComponentModel;
 
@@ -9,4 +10,11 @@ public record CreateProductCommand(
     string Name,
     [property: Description("Price of product.")]
     decimal Price
-) : IRequest<Result<Ulid>>;
+) : IRequest<Result<Ulid>>, ICacheInvalidationCommand
+{
+    public IEnumerable<string> CacheKeys =>
+        new[]
+        {
+            "products:*"
+        };
+}

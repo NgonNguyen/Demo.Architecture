@@ -1,21 +1,25 @@
 ﻿using Ardalis.Result;
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Infrastructure.Data;
+using Demo.Architecture.Infrastructure.Serialization;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Helpers.Products;
 using Demo.Architecture.Test.Shared.Json;
+using Demo.Architecture.Test.Shared.Seeders;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using Demo.Architecture.WebAPI.Features.Products.GetList;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUnit.Framework;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 using AppModels = Demo.Architecture.UseCases.Common.Models;
 
 namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
@@ -23,6 +27,12 @@ namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
 [TestFixture]
 public class GetListProductsEndpointTests
 {
+    private static readonly JsonSerializerOptions _options = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new UlidJsonConverter() }
+    };
+
     // ---------------- BASIC ----------------
 
     [Test]
@@ -387,4 +397,137 @@ public class GetListProductsEndpointTests
         result!.Items.Should().HaveCount(2);
         result.Items.Select(x => x.Price).Should().BeInAscendingOrder();
     }
+
+    // ---------------- HTTP Client + Cache ----------------
+
+    [Test]
+    public async Task Should_Return_Cached_Data_On_Second_Call()
+    {
+        var factory = new CachedTestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        // Arrange
+        await ProductSeeder.SeedAsync(context);
+
+        // First call → cache is populated
+        var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        // Change DB AFTER cache is set
+        await ProductSeeder.SeedMoreAsync(context);
+
+        // Second call → should return cached data (NOT new DB data)
+        var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        // Assert
+        data2!.TotalCount.Should().Be(data1!.TotalCount); // 🔥 proves cache hit
+    }
+
+    [Test]
+    public async Task Should_Invalidate_Cache_After_Create_Product()
+    {
+        var factory = new CachedTestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        await ProductSeeder.SeedAsync(context);
+
+        // First call → cache
+        var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        // Create new product
+        await client.PostAsJsonAsync($"{TestConstants.ProductsEndpoint}", new
+        {
+            Name = "New Product",
+            Price = 100
+        });
+
+        // Second call → SHOULD reflect new data (cache invalidated)
+        var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        data2!.TotalCount.Should().BeGreaterThan(data1!.TotalCount);
+    }
+
+    [Test]
+    public async Task Should_Invalidate_Cache_After_Update_Product()
+    {
+        var factory = new CachedTestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        await ProductSeeder.SeedAsync(context);
+
+        // Get a product to update
+        var product = await context.Products.FirstAsync();
+
+        // First call → cache
+        var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        // Update product
+        await client.PutAsJsonAsync($"{TestConstants.ProductsEndpoint}/{product.Id}", new
+        {
+            Name = "Updated Product",
+            Price = 999
+        });
+
+        // Second call → should reflect updated data
+        var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        // ✅ Assert: updated product appears
+        data2!.Items.Should().Contain(x => x.Name == "Updated Product");
+    }
+
+    [Test]
+    public async Task Should_Invalidate_Cache_After_Delete_Product()
+    {
+        var factory = new CachedTestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+
+        await ProductSeeder.SeedAsync(context);
+
+        // Get a product to delete
+        var product = await context.Products.FirstAsync();
+
+        // First call → cache
+        var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        // Delete product
+        await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+
+        // Second call → should reflect deletion
+        var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+
+        // ✅ Assert: total count decreased
+        data2!.TotalCount.Should().Be(data1!.TotalCount - 1);
+    }
+
 }

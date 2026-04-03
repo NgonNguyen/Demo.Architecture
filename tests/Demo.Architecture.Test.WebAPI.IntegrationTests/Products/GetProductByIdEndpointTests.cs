@@ -2,16 +2,20 @@
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Infrastructure.Data;
+using Demo.Architecture.Infrastructure.Serialization;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Json;
+using Demo.Architecture.Test.Shared.Seeders;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetById;
+using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using Demo.Architecture.WebAPI.Features.Products.GetById;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUlid;
@@ -25,6 +29,12 @@ namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
 [TestFixture]
 public class GetProductByIdEndpointTests
 {
+    private static readonly JsonSerializerOptions _options = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new UlidJsonConverter() }
+    };
+
     // ---------------- BASIC (unit) ----------------
 
     [Test]
@@ -139,5 +149,93 @@ public class GetProductByIdEndpointTests
         var errorCode = errorCodeObj is JsonElement je ? je.GetString() : errorCodeObj?.ToString();
         errorCode.Should().Be(ProductErrors.NotFound.Code);
         problem.Instance.Should().Be($"/api/products/{id}");
+    }
+
+    // ---------------- HTTP Client + Cache ----------------
+
+    [Test]
+    public async Task Should_Return_Cached_Data_On_Second_Call()
+    {
+        var factory = new CachedTestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+        await ProductSeeder.SeedAsync(context);
+
+        var product = await context.Products.FirstAsync();
+
+        // First call → hits DB
+        var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+        var data1 = await res1.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+
+        // Second call → should hit cache
+        var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+        var data2 = await res2.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+
+        data2!.Id.Should().Be(data1!.Id);
+    }
+
+    [Test]
+    public async Task Should_Invalidate_Cache_After_Update_Product()
+    {
+        var factory = new CachedTestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+        await ProductSeeder.SeedAsync(context);
+
+        var product = await context.Products.FirstAsync();
+
+        // First call → cache
+        var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+        var data1 = await res1.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+
+        // Update product
+        await client.PutAsJsonAsync($"{TestConstants.ProductsEndpoint}/{product.Id}", new
+        {
+            Name = "Updated Product",
+            Price = 999
+        });
+
+        // Second call → should reflect updated data
+        var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+        var data2 = await res2.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+
+        data2!.Name.Should().Be("Updated Product");
+    }
+
+    [Test]
+    public async Task Should_Invalidate_Cache_After_Delete_Product()
+    {
+        var factory = new CachedTestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureCreatedAsync();
+        await ProductSeeder.SeedAsync(context);
+
+        var product = await context.Products.FirstAsync();
+
+        // First call → cache
+        await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+
+        // Delete product
+        await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+
+        // Second call → should be NotFound (cache invalidated)
+        var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
+
+        res2.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

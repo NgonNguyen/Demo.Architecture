@@ -1,8 +1,8 @@
-﻿namespace Demo.Architecture.WebAPI.Common.Json;
-
-using NUlid;
+﻿using NUlid;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+namespace Demo.Architecture.WebAPI.Common.Json;
 
 public class UlidJsonConverter : JsonConverter<Ulid>
 {
