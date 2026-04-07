@@ -1,4 +1,5 @@
-﻿using Demo.Architecture.Infrastructure.Data;
+﻿using Demo.Architecture.Core.Entities.Products;
+using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using NUlid;
 
@@ -20,7 +21,8 @@ public class ProductUniquenessChecker : IProductUniquenessChecker
 
     public async Task<bool> IsNameUnique(string name, Ulid id, CancellationToken ct)
     {
+        var productId = ProductId.From(id);
         return !await _context.Products
-            .AnyAsync(p => p.Name == name && p.Id != id, ct);
+            .AnyAsync(p => p.Name == name && p.Id != productId, ct);
     }
 }

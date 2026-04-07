@@ -1,4 +1,6 @@
 ﻿using Ardalis.Result;
+using Demo.Architecture.Core.Entities.Products;
+using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Json;
@@ -239,12 +241,69 @@ public class UpdateProductEndpointTests
         errors.Should().NotBeNull();
 
         errors.Should().Contain(e =>
-            e.Field == "name" &&
-            e.Code == "PRODUCT_NAME_REQUIRED");
+            e.Field == nameof(Product.Name) &&
+            e.Code == ProductErrors.NameRequired.Code &&
+            e.Message == ProductErrors.NameRequired.Message);
 
         errors.Should().Contain(e =>
-            e.Field == "price" &&
-            e.Code == "PRODUCT_PRICE_INVALID");
+            e.Field == nameof(Product.Price) &&
+            e.Code == ProductErrors.PriceInvalid.Code &&
+            e.Message == ProductErrors.PriceInvalid.Message);
+    }
+
+    [Test]
+    public async Task Should_Return_400_When_Name_Already_Exists()
+    {
+        var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        // Arrange - create two products
+        var createResponseA = await client.PostAsJsonAsync(
+            TestConstants.ProductsEndpoint,
+            new CreateProductCommand("ExistingNameA", 100));
+
+        var idA = await createResponseA.Content
+            .ReadFromJsonAsync<Ulid>(JsonOptionsHelper.Create());
+
+        var createResponseB = await client.PostAsJsonAsync(
+            TestConstants.ProductsEndpoint,
+            new CreateProductCommand("ExistingNameB", 200));
+
+        var idB = await createResponseB.Content
+            .ReadFromJsonAsync<Ulid>(JsonOptionsHelper.Create());
+
+        // Act - try to update product B to have product A’s name
+        var response = await client.PutAsJsonAsync(
+            $"{TestConstants.ProductsEndpoint}/{idB}",
+            new
+            {
+                name = "ExistingNameA",
+                price = 300
+            });
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var problem = await response.Content
+            .ReadFromJsonAsync<ProblemDetails>(JsonOptionsHelper.Create());
+
+        problem.Should().NotBeNull();
+        problem!.Title.Should().Be("Validation Error");
+        problem.Status.Should().Be(StatusCodes.Status400BadRequest);
+        problem.Extensions.Should().ContainKey("errors");
+
+        var errorsJson = problem.Extensions["errors"];
+
+        var errors = JsonSerializer.Deserialize<List<ValidationErrorDto>>(
+            JsonSerializer.Serialize(errorsJson),
+            JsonOptionsHelper.Create());
+
+        errors.Should().NotBeNull();
+
+        errors.Should().Contain(e =>
+            e.Field == nameof(Product.Name) &&
+            e.Message == ProductErrors.DuplicatedName.Message &&
+            e.Code == ProductErrors.DuplicatedName.Code);
     }
 
     [Test]

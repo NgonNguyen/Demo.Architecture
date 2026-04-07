@@ -1,14 +1,18 @@
 ﻿using Ardalis.Result;
+using Demo.Architecture.Core.Entities.Products;
+using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Json;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Commands.Create;
+using Demo.Architecture.UseCases.Features.Products.Commands.Update;
 using Demo.Architecture.WebAPI.Features.Products.Create;
 using FluentAssertions;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUlid;
 using NUnit.Framework;
@@ -144,14 +148,45 @@ public class CreateProductEndpointTests
         errors!.Should().HaveCount(2);
 
         errors.Should().Contain(e =>
-            e.Field == "name" &&
-            e.Message == "Name is required" &&
-            e.Code == "PRODUCT_NAME_REQUIRED");
+            e.Field == nameof(Product.Name) &&
+            e.Message == ProductErrors.NameRequired.Message &&
+            e.Code == ProductErrors.NameRequired.Code);
 
         errors.Should().Contain(e =>
-            e.Field == "price" &&
-            e.Message == "Price must be > 0" &&
-            e.Code == "PRODUCT_PRICE_INVALID");
+            e.Field == nameof(Product.Price) &&
+            e.Message == ProductErrors.PriceInvalid.Message &&
+            e.Code == ProductErrors.PriceInvalid.Code);
+    }
+
+    [Test]
+    public async Task Should_Return_400_When_Name_Already_Exists()
+    {
+        var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        await client.PostAsJsonAsync(TestConstants.ProductsEndpoint,
+            new CreateProductCommand("ExistingName", 100));
+
+        var command = new CreateProductCommand("ExistingName", 200);
+        var response = await client.PostAsJsonAsync(TestConstants.ProductsEndpoint, command);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(JsonOptionsHelper.Create());
+
+        problem.Should().NotBeNull();
+        problem!.Title.Should().Be("Validation Error");
+        problem.Status.Should().Be(StatusCodes.Status400BadRequest);
+
+        var errorsJson = problem.Extensions["errors"];
+        var errors = JsonSerializer.Deserialize<List<ValidationErrorDto>>(
+            JsonSerializer.Serialize(errorsJson),
+            JsonOptionsHelper.Create());
+
+        errors.Should().Contain(e =>
+            e.Field == nameof(Product.Name) &&
+            e.Message == ProductErrors.DuplicatedName.Message &&
+            e.Code == ProductErrors.DuplicatedName.Code);
     }
 }
 

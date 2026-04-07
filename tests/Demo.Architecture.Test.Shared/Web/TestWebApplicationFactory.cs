@@ -1,6 +1,12 @@
 ﻿using Demo.Architecture.Infrastructure.Data;
+using Demo.Architecture.Infrastructure.Features.Products;
 using Demo.Architecture.Test.Shared.Services;
+using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Interfaces;
+using Demo.Architecture.UseCases.Features.Products.Commands.Create;
+using Demo.Architecture.UseCases.Features.Products.Rules;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -56,6 +62,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             {
                 options.UseSqlite(_connection);
             });
+
+            services.AddScoped<IProductUniquenessChecker, ProductUniquenessChecker>();
+
+            services.AddValidatorsFromAssembly(typeof(IProductUniquenessChecker).Assembly);
+
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
             // 🔥 Apply custom overrides (THIS is what WithServices uses)
             _configureServices?.Invoke(services);

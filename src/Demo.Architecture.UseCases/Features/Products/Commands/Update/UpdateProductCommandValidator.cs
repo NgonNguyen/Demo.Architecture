@@ -1,8 +1,6 @@
 ﻿using Demo.Architecture.Core.Errors;
-using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using FluentValidation;
-using Microsoft.EntityFrameworkCore;
 
 namespace Demo.Architecture.UseCases.Features.Products.Commands.Update;
 
@@ -23,7 +21,8 @@ public class UpdateProductCommandValidator
             .MustAsync(async (cmd, ct) =>
                 await checker.IsNameUnique(cmd.Name, cmd.Id, ct))
             .WithMessage(ProductErrors.DuplicatedName.Message)
-            .WithErrorCode(ProductErrors.DuplicatedName.Code);
+            .WithErrorCode(ProductErrors.DuplicatedName.Code)
+            .WithName(nameof(UpdateProductCommand.Name));
 
         RuleFor(x => x.Price)
             .GreaterThan(0)
