@@ -1,8 +1,8 @@
 using Demo.Architecture.WebAPI.OpenApi.Attributes;
+using Newtonsoft.Json.Linq;
 using NSwag.Generation.Processors;
 using NSwag.Generation.Processors.Contexts;
 using System.Text.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Demo.Architecture.WebAPI.OpenApi.Processors;
 
@@ -33,15 +33,7 @@ public class RequestExampleOperationProcessor : IOperationProcessor
 
             try
             {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    WriteIndented = false
-                };
-
-                options.Converters.Add(new Demo.Architecture.WebAPI.Common.Json.UlidJsonConverter());
-
-                var json = JsonSerializer.Serialize(exampleObj, options);
+                var json = JsonSerializer.Serialize(exampleObj, Shared.Serialization.JsonSerializerDefaults.Options);
                 var jtoken = JToken.Parse(json);
                 requestBody.Content["application/json"].Example = jtoken;
             }

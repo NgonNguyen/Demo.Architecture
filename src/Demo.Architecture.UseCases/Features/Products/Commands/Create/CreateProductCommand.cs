@@ -1,10 +1,12 @@
-﻿using Demo.Architecture.UseCases.Common.Caching;
+﻿using Demo.Architecture.UseCases.Common.Attributes;
+using Demo.Architecture.UseCases.Common.Caching;
 using MediatR;
 using NUlid;
 using System.ComponentModel;
 
 namespace Demo.Architecture.UseCases.Features.Products.Commands.Create;
 
+[RequireIdempotency]
 public record CreateProductCommand(
     [property: Description("Name of product.")]
     string Name,

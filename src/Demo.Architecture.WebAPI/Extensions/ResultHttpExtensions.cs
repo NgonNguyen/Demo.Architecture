@@ -42,34 +42,18 @@ public static class ResultExtensions
                         Detail = "One or more validation errors occurred.",
                         Extensions =
                         {
-                            ["errors"] = result.ValidationErrors
-                                .Select(ev =>
-                                {
-                                    // code is the identifier when available
-                                    var codeVal = ev.Identifier ?? "Error";
+                            ["errors"] = result.ValidationErrors.Select(ev => new
+                            {
+                                field = string.IsNullOrEmpty(ev.Identifier)
+                                    ? "unknown"
+                                    : ev.Identifier,
 
-                                    // derive field name from error code when possible (eg. PRODUCT_PRICE_INVALID -> price)
-                                    string field;
-                                    if (!string.IsNullOrEmpty(ev.Identifier) && ev.Identifier.Contains("_"))
-                                    {
-                                        var parts = ev.Identifier.Split('_');
-                                        if (parts.Length >= 2)
-                                            field = parts[1].ToLowerInvariant();
-                                        else
-                                            field = "Error";
-                                    }
-                                    else
-                                    {
-                                        field = "Error";
-                                    }
+                                message = ev.ErrorMessage,
 
-                                    return new
-                                    {
-                                        field,
-                                        message = ev.ErrorMessage,
-                                        code = codeVal
-                                    };
-                                }).ToArray()
+                                code = string.IsNullOrEmpty(ev.ErrorCode)
+                                    ? $"{ev.Identifier?.ToUpperInvariant()}_VALIDATION_ERROR"
+                                    : ev.ErrorCode
+                            }).ToArray()
                         }
                     }
                 ),
@@ -119,31 +103,18 @@ public static class ResultExtensions
                         Detail = "One or more validation errors occurred.",
                         Extensions =
                         {
-                            ["errors"] = result.ValidationErrors
-                                .Select(ev =>
-                                {
-                                    var codeVal = ev.Identifier ?? "Error";
-                                    string field;
-                                    if (!string.IsNullOrEmpty(ev.Identifier) && ev.Identifier.Contains("_"))
-                                    {
-                                        var parts = ev.Identifier.Split('_');
-                                        if (parts.Length >= 2)
-                                            field = parts[1].ToLowerInvariant();
-                                        else
-                                            field = "Error";
-                                    }
-                                    else
-                                    {
-                                        field = "Error";
-                                    }
+                            ["errors"] = result.ValidationErrors.Select(ev => new
+                            {
+                                field = string.IsNullOrEmpty(ev.Identifier)
+                                    ? "unknown"
+                                    : ev.Identifier,
 
-                                    return new
-                                    {
-                                        field,
-                                        message = ev.ErrorMessage,
-                                        code = codeVal
-                                    };
-                                }).ToArray()
+                                message = ev.ErrorMessage,
+
+                                code = string.IsNullOrEmpty(ev.ErrorCode)
+                                    ? $"{ev.Identifier?.ToUpperInvariant()}_VALIDATION_ERROR"
+                                    : ev.ErrorCode
+                            }).ToArray()
                         }
                     }
                 ),

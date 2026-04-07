@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Demo.Architecture.Shared\Demo.Architecture.Shared.csproj" />
     <ProjectReference Include="..\..\src\Demo.Architecture.UseCases\Demo.Architecture.UseCases.csproj" />
     <ProjectReference Include="..\..\src\Demo.Architecture.WebAPI\Demo.Architecture.WebAPI.csproj" />
     <ProjectReference Include="..\Demo.Architecture.Test.Shared\Demo.Architecture.Test.Shared.csproj" />

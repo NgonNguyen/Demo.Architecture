@@ -1,4 +1,4 @@
-﻿using Demo.Architecture.WebAPI.Common.Json;
+﻿using Demo.Architecture.Shared.Serialization;
 using Demo.Architecture.WebAPI.OpenApi.Attributes;
 using Newtonsoft.Json.Linq;
 using NSwag.Generation.Processors;
@@ -48,15 +48,7 @@ public class ResponseExampleOperationProcessor : IOperationProcessor
             // so the OpenAPI document shows camelCase property names.
             try
             {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    WriteIndented = false
-                };
-
-                options.Converters.Add(new UlidJsonConverter());
-
-                var json = JsonSerializer.Serialize(exampleObj, options);
+                var json = JsonSerializer.Serialize(exampleObj, Shared.Serialization.JsonSerializerDefaults.Options);
 
                 // Parse to a Newtonsoft JToken so NSwag/Swagger UI will embed the raw JSON
                 // instead of serializing a JsonElement object (which yields { "ValueKind": 1 }).

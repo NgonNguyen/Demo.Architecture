@@ -1,5 +1,4 @@
-﻿using Demo.Architecture.UseCases.Common.Exceptions;
-using Microsoft.AspNetCore.Diagnostics;
+﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -24,29 +23,6 @@ public class GlobalExceptionHandler(
 
         switch (exception)
         {
-            case ApiValidationException apiValidationEx:
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-
-                problemDetails = new ProblemDetails
-                {
-                    Title = "Validation Error",
-                    Status = StatusCodes.Status400BadRequest,
-                    Detail = apiValidationEx.Message,
-                    Instance = context.Request.Path
-                };
-                
-                problemDetails.Extensions["errors"] = apiValidationEx.Failures.Select(error => new
-                {
-                    field = error.PropertyName,
-                    message = error.ErrorMessage,
-                    code = string.IsNullOrEmpty(error.ErrorCode)
-                        ? $"{error.PropertyName.ToUpperInvariant()}_VALIDATION_ERROR"
-                        : error.ErrorCode
-                });
-                problemDetails.Extensions["traceId"] = traceId;
-
-                break;
-
             case UnauthorizedAccessException:
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 

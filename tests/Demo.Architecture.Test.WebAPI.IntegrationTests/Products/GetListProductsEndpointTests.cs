@@ -1,11 +1,9 @@
 ﻿using Ardalis.Result;
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Infrastructure.Data;
-using Demo.Architecture.Infrastructure.Serialization;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Helpers.Products;
-using Demo.Architecture.Test.Shared.Json;
 using Demo.Architecture.Test.Shared.Seeders;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
@@ -19,7 +17,6 @@ using Moq;
 using NUnit.Framework;
 using System.Net;
 using System.Net.Http.Json;
-using System.Text.Json;
 using AppModels = Demo.Architecture.UseCases.Common.Models;
 
 namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
@@ -27,12 +24,6 @@ namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
 [TestFixture]
 public class GetListProductsEndpointTests
 {
-    private static readonly JsonSerializerOptions _options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new UlidJsonConverter() }
-    };
-
     // ---------------- BASIC ----------------
 
     [Test]
@@ -157,7 +148,6 @@ public class GetListProductsEndpointTests
     [Test]
     public async Task Should_Respect_PageSize()
     {
-        var options = JsonOptionsHelper.Create();
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
@@ -173,7 +163,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(options);
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Should().HaveCount(5);
     }
@@ -181,7 +171,6 @@ public class GetListProductsEndpointTests
     [Test]
     public async Task Should_Return_Second_Page()
     {
-        var options = JsonOptionsHelper.Create();
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
@@ -197,7 +186,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=2&pageSize=5");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(options);
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Should().HaveCount(5);
     }
@@ -205,7 +194,6 @@ public class GetListProductsEndpointTests
     [Test]
     public async Task Should_Return_Correct_Product_Data()
     {
-        var options = JsonOptionsHelper.Create();
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
@@ -218,7 +206,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=10");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(options);
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         var product = result!.Items.First();
 
@@ -243,7 +231,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&searchTerm=laptop");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Should().HaveCount(2);
     }
@@ -263,7 +251,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&searchTerm=LAPTOP");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Should().HaveCount(1);
     }
@@ -283,7 +271,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&searchTerm=xyz");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Should().BeEmpty();
     }
@@ -304,7 +292,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&sort=name");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Select(x => x.Name)
             .Should().BeInAscendingOrder();
@@ -326,7 +314,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&sort=name_desc");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Select(x => x.Name)
             .Should().BeInDescendingOrder();
@@ -349,7 +337,7 @@ public class GetListProductsEndpointTests
         var response = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5&sort=price");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Select(x => x.Price)
             .Should().BeInAscendingOrder();
@@ -392,7 +380,7 @@ public class GetListProductsEndpointTests
             $"{TestConstants.ProductsEndpoint}?searchTerm=laptop&sort=price&page=1&pageSize=2");
 
         var result = await response.Content.ReadFromJsonAsync<
-            AppModels.PagedResult<GetListProductsResponse>>(JsonOptionsHelper.Create());
+            AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Items.Should().HaveCount(2);
         result.Items.Select(x => x.Price).Should().BeInAscendingOrder();
@@ -417,14 +405,14 @@ public class GetListProductsEndpointTests
 
         // First call → cache is populated
         var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Change DB AFTER cache is set
         await ProductSeeder.SeedMoreAsync(context);
 
         // Second call → should return cached data (NOT new DB data)
         var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Assert
         data2!.TotalCount.Should().Be(data1!.TotalCount); // 🔥 proves cache hit
@@ -446,7 +434,7 @@ public class GetListProductsEndpointTests
 
         // First call → cache
         var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Create new product
         await client.PostAsJsonAsync($"{TestConstants.ProductsEndpoint}", new
@@ -457,7 +445,7 @@ public class GetListProductsEndpointTests
 
         // Second call → SHOULD reflect new data (cache invalidated)
         var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         data2!.TotalCount.Should().BeGreaterThan(data1!.TotalCount);
     }
@@ -481,7 +469,7 @@ public class GetListProductsEndpointTests
 
         // First call → cache
         var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Update product
         await client.PutAsJsonAsync($"{TestConstants.ProductsEndpoint}/{product.Id}", new
@@ -492,7 +480,7 @@ public class GetListProductsEndpointTests
 
         // Second call → should reflect updated data
         var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // ✅ Assert: updated product appears
         data2!.Items.Should().Contain(x => x.Name == "Updated Product");
@@ -517,14 +505,14 @@ public class GetListProductsEndpointTests
 
         // First call → cache
         var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data1 = await res1.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Delete product
         await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
 
         // Second call → should reflect deletion
         var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}?page=1&pageSize=5");
-        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(_options);
+        var data2 = await res2.Content.ReadFromJsonAsync<AppModels.PagedResult<GetListProductsResponse>>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // ✅ Assert: total count decreased
         data2!.TotalCount.Should().Be(data1!.TotalCount - 1);

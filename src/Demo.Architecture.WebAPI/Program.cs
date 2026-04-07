@@ -1,13 +1,13 @@
 using Demo.Architecture.Infrastructure.Caching;
 using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Infrastructure.Features.Products;
+using Demo.Architecture.Shared.Serialization;
 using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Interfaces;
-using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using Demo.Architecture.WebAPI.Common.Endpoints;
-using Demo.Architecture.WebAPI.Common.Json;
+using Demo.Architecture.WebAPI.Configurations;
 using Demo.Architecture.WebAPI.Middlewares;
 using Demo.Architecture.WebAPI.OpenApi.Processors;
 using FluentValidation;
@@ -17,7 +17,6 @@ using StackExchange.Redis;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -34,7 +33,9 @@ builder.Services.AddProblemDetails(options =>
 // MediatR
 // -----------------------------
 builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(GetListProductsQuery).Assembly));
+{
+    cfg.RegisterServicesFromAssembly(typeof(GetListProductsQuery).Assembly);
+});
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
@@ -50,6 +51,7 @@ builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 if (!builder.Environment.IsEnvironment("Test"))
 {
+    builder.Services.AddIdempotency();
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
     builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(CacheInvalidationBehavior<,>));

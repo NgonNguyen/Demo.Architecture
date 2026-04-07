@@ -1,4 +1,5 @@
 ﻿using Demo.Architecture.Core.Errors;
+using Demo.Architecture.UseCases.Common.Errors;
 
 namespace Demo.Architecture.WebAPI.Common.Errors;
 
@@ -6,7 +7,9 @@ public static class ErrorMapping
 {
     private static readonly Dictionary<string, string> Errors = new()
     {
-        { ProductErrors.NotFound.Code, ProductErrors.NotFound.Message }
+        { ProductErrors.NotFound.Code, ProductErrors.NotFound.Message },
+        { CommonErrors.IdempotencyConflict.Code, CommonErrors.IdempotencyConflict.Message },
+        { CommonErrors.IdempotencyInProgress.Code, CommonErrors.IdempotencyInProgress.Message },
     };
 
     public static string GetMessage(string code)

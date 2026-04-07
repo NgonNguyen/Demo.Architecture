@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Demo.Architecture.Infrastructure.Serialization;
+namespace Demo.Architecture.Shared.Serialization;
 
 public class UlidJsonConverter : JsonConverter<Ulid>
 {

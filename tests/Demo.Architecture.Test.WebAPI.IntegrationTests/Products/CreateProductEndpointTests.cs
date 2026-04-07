@@ -3,10 +3,8 @@ using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
-using Demo.Architecture.Test.Shared.Json;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Commands.Create;
-using Demo.Architecture.UseCases.Features.Products.Commands.Update;
 using Demo.Architecture.WebAPI.Features.Products.Create;
 using FluentAssertions;
 using MediatR;
@@ -113,7 +111,7 @@ public class CreateProductEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<Ulid>(JsonOptionsHelper.Create());
+        var result = await response.Content.ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result.Should().NotBe(default(Ulid));
     }
@@ -130,7 +128,7 @@ public class CreateProductEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var problem = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>(JsonOptionsHelper.Create());
+        var problem = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         problem.Should().NotBeNull();
         problem!.Title.Should().Be("Validation Error");
@@ -142,7 +140,7 @@ public class CreateProductEndpointTests
 
         var errors = JsonSerializer.Deserialize<List<ValidationErrorDto>>(
             JsonSerializer.Serialize(errorsJson),
-            JsonOptionsHelper.Create());
+            Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         errors.Should().NotBeNull();
         errors!.Should().HaveCount(2);
@@ -172,7 +170,7 @@ public class CreateProductEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(JsonOptionsHelper.Create());
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         problem.Should().NotBeNull();
         problem!.Title.Should().Be("Validation Error");
@@ -181,7 +179,7 @@ public class CreateProductEndpointTests
         var errorsJson = problem.Extensions["errors"];
         var errors = JsonSerializer.Deserialize<List<ValidationErrorDto>>(
             JsonSerializer.Serialize(errorsJson),
-            JsonOptionsHelper.Create());
+            Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         errors.Should().Contain(e =>
             e.Field == nameof(Product.Name) &&

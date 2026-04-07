@@ -2,14 +2,11 @@
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Infrastructure.Data;
-using Demo.Architecture.Infrastructure.Serialization;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
-using Demo.Architecture.Test.Shared.Json;
 using Demo.Architecture.Test.Shared.Seeders;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetById;
-using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using Demo.Architecture.WebAPI.Features.Products.GetById;
 using FluentAssertions;
 using MediatR;
@@ -29,12 +26,6 @@ namespace Demo.Architecture.Test.WebAPI.IntegrationTests.Products;
 [TestFixture]
 public class GetProductByIdEndpointTests
 {
-    private static readonly JsonSerializerOptions _options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new UlidJsonConverter() }
-    };
-
     // ---------------- BASIC (unit) ----------------
 
     [Test]
@@ -121,7 +112,7 @@ public class GetProductByIdEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var result = await response.Content.ReadFromJsonAsync<GetProductByIdResponse>(JsonOptionsHelper.Create());
+        var result = await response.Content.ReadFromJsonAsync<GetProductByIdResponse>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         result!.Id.Should().Be(product.Id.Value);
         result.Name.Should().Be(TestConstants.ValidProductNameA);
@@ -139,7 +130,7 @@ public class GetProductByIdEndpointTests
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-        var problem = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>(JsonOptionsHelper.Create());
+        var problem = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         problem.Should().NotBeNull();
         problem!.Title.Should().Be("Not Found");
@@ -170,11 +161,11 @@ public class GetProductByIdEndpointTests
 
         // First call → hits DB
         var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
-        var data1 = await res1.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+        var data1 = await res1.Content.ReadFromJsonAsync<GetProductByIdResponse>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Second call → should hit cache
         var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
-        var data2 = await res2.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+        var data2 = await res2.Content.ReadFromJsonAsync<GetProductByIdResponse>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         data2!.Id.Should().Be(data1!.Id);
     }
@@ -196,7 +187,7 @@ public class GetProductByIdEndpointTests
 
         // First call → cache
         var res1 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
-        var data1 = await res1.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+        var data1 = await res1.Content.ReadFromJsonAsync<GetProductByIdResponse>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Update product
         await client.PutAsJsonAsync($"{TestConstants.ProductsEndpoint}/{product.Id}", new
@@ -207,7 +198,7 @@ public class GetProductByIdEndpointTests
 
         // Second call → should reflect updated data
         var res2 = await client.GetAsync($"{TestConstants.ProductsEndpoint}/{product.Id}");
-        var data2 = await res2.Content.ReadFromJsonAsync<GetProductByIdResponse>(_options);
+        var data2 = await res2.Content.ReadFromJsonAsync<GetProductByIdResponse>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         data2!.Name.Should().Be("Updated Product");
     }

@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Demo.Architecture.Core\Demo.Architecture.Core.csproj" />
+    <ProjectReference Include="..\Demo.Architecture.Shared\Demo.Architecture.Shared.csproj" />
   </ItemGroup>
 
 </Project>

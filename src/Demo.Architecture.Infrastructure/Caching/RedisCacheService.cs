@@ -1,7 +1,6 @@
 ﻿using Demo.Architecture.UseCases.Common.Interfaces;
-using System.Text.Json;
 using StackExchange.Redis;
-using Demo.Architecture.Infrastructure.Serialization;
+using System.Text.Json;
 
 namespace Demo.Architecture.Infrastructure.Caching;
 
@@ -9,11 +8,6 @@ public class RedisCacheService : ICacheService
 {
     private readonly IConnectionMultiplexer _redis;
     private readonly IDatabase _db;
-    private static readonly JsonSerializerOptions _options = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new UlidJsonConverter() }
-    };
 
     public RedisCacheService(IConnectionMultiplexer redis)
     {
@@ -28,14 +22,14 @@ public class RedisCacheService : ICacheService
         if (!value.HasValue)
             return default;
 
-        return JsonSerializer.Deserialize<T>((byte[])value!, _options);
+        return JsonSerializer.Deserialize<T>((byte[])value!, Shared.Serialization.JsonSerializerDefaults.Options);
     }
 
     public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
     {
         await _db.StringSetAsync(
             key: key,
-            value: JsonSerializer.Serialize(value, _options),
+            value: JsonSerializer.Serialize(value, Shared.Serialization.JsonSerializerDefaults.Options),
             expiry: expiry,
             when: When.Always,
             flags: CommandFlags.None
