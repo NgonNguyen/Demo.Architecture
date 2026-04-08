@@ -145,7 +145,7 @@ public class IdempotencyBehavior<TRequest, TResponse>
 
     private static string ComputeHash(TRequest request)
     {
-        var json = JsonSerializer.Serialize(request);
+        var json = JsonSerializer.Serialize(request, Shared.Serialization.JsonSerializerDefaults.Options);
         return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(json)));
     }
 }

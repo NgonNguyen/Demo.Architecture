@@ -3,6 +3,7 @@ using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
+using Demo.Architecture.Test.Shared.Helpers.Products;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.UseCases.Features.Products.Commands.Update;
@@ -176,25 +177,23 @@ public class UpdateProductEndpointTests
         var client = factory.CreateClient();
 
         // Arrange - create product first
-        var createResponse = await client.PostAsJsonAsync(
-            TestConstants.ProductsEndpoint,
-            new CreateProductCommand(
-                TestConstants.ValidProductNameA,
-                TestConstants.ValidPriceA));
+        var createCommand = new CreateProductCommand(
+            TestConstants.ValidProductNameA,
+            TestConstants.ValidPriceA);
+        var createResponse = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommand));
 
         var createdId = await createResponse.Content
             .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
-        // Act
-        var response = await client.PutAsJsonAsync(
-            $"{TestConstants.ProductsEndpoint}/{createdId}",
-            new
-            {
-                name = TestConstants.ValidProductNameB,
-                price = TestConstants.ValidPriceB
-            });
+        var updateCommand = new UpdateProductCommand(
+            createdId,
+            TestConstants.ValidProductNameB,
+            TestConstants.ValidPriceB);
 
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var updateResponse = await client.SendAsync(ProductTestDataHelper.UpdateRequest(updateCommand));
+
+        // Act
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
     [Test]
@@ -204,26 +203,23 @@ public class UpdateProductEndpointTests
         var client = factory.CreateClient();
 
         // Arrange - create product first
-        var createResponse = await client.PostAsJsonAsync(
-            TestConstants.ProductsEndpoint,
-            new CreateProductCommand(
-                TestConstants.ValidProductNameA,
-                TestConstants.ValidPriceA));
+        var createCommand = new CreateProductCommand(
+            TestConstants.ValidProductNameA,
+            TestConstants.ValidPriceA);
+        var createResponse = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommand));
 
         var createdId = await createResponse.Content
             .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
-        var response = await client.PutAsJsonAsync(
-            $"{TestConstants.ProductsEndpoint}/{createdId}",
-            new
-            {
-                name = "",
-                price = 0
-            });
+        var updateCommand = new UpdateProductCommand(
+            createdId,
+            string.Empty,
+            0);
+        var updateResponse = await client.SendAsync(ProductTestDataHelper.UpdateRequest(updateCommand));
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var problem = await response.Content
+        var problem = await updateResponse.Content
             .ReadFromJsonAsync<ProblemDetails>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         problem.Should().NotBeNull();
@@ -257,28 +253,24 @@ public class UpdateProductEndpointTests
         var client = factory.CreateClient();
 
         // Arrange - create two products
-        var createResponseA = await client.PostAsJsonAsync(
-            TestConstants.ProductsEndpoint,
-            new CreateProductCommand("ExistingNameA", 100));
+        var createCommandA = new CreateProductCommand("ExistingNameA", 100);
+        var createResponseA = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommandA));
 
         var idA = await createResponseA.Content
             .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
-        var createResponseB = await client.PostAsJsonAsync(
-            TestConstants.ProductsEndpoint,
-            new CreateProductCommand("ExistingNameB", 200));
+        var createCommandB = new CreateProductCommand("ExistingNameB", 200);
+        var createResponseB = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommandB));
 
         var idB = await createResponseB.Content
             .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         // Act - try to update product B to have product A’s name
-        var response = await client.PutAsJsonAsync(
-            $"{TestConstants.ProductsEndpoint}/{idB}",
-            new
-            {
-                name = "ExistingNameA",
-                price = 300
-            });
+        var updateCommand = new UpdateProductCommand(
+            idB,
+            "ExistingNameA",
+            300);
+        var response = await client.SendAsync(ProductTestDataHelper.UpdateRequest(updateCommand));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -313,13 +305,11 @@ public class UpdateProductEndpointTests
 
         var id = Ulid.NewUlid();
 
-        var response = await client.PutAsJsonAsync(
-            $"{TestConstants.ProductsEndpoint}/{id}",
-            new
-            {
-                name = TestConstants.ValidProductNameA,
-                price = TestConstants.ValidPriceA
-            });
+        var updateCommand = new UpdateProductCommand(
+            id,
+            TestConstants.ValidProductNameA,
+            TestConstants.ValidPriceA);
+        var response = await client.SendAsync(ProductTestDataHelper.UpdateRequest(updateCommand));
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }

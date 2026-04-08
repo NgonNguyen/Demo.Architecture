@@ -2,9 +2,11 @@
 using Demo.Architecture.Infrastructure.Features.Products;
 using Demo.Architecture.Test.Shared.Services;
 using Demo.Architecture.UseCases.Common.Behaviors;
+using Demo.Architecture.UseCases.Common.Idempotency;
 using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.UseCases.Features.Products.Rules;
+using Demo.Architecture.WebAPI.Configurations;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
@@ -40,9 +42,13 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             // ❌ (Optional but recommended) remove Redis connection too
             services.RemoveAll<IConnectionMultiplexer>();
+            services.RemoveAll<IIdempotencyService>();
 
             // ✅ Add MemoryCache
             services.AddMemoryCache();
+            
+            services.AddSingleton<IIdempotencyService, InMemoryIdempotencyService>();
+            // ;
 
             // ✅ Replace with MemoryCacheService
             services.AddSingleton<ICacheService, MemoryCacheService>();
@@ -67,6 +73,8 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddValidatorsFromAssembly(typeof(IProductUniquenessChecker).Assembly);
 
+            services.AddHttpContextAccessor();
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(IdempotencyBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
             // 🔥 Apply custom overrides (THIS is what WithServices uses)

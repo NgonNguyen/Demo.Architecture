@@ -2,6 +2,7 @@
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Test.Shared.Constants;
+using Demo.Architecture.Test.Shared.Helpers.Products;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Commands.Delete;
 using Demo.Architecture.WebAPI.Features.Products.Delete;
@@ -92,7 +93,7 @@ public class DeleteProductEndpointTests
         var randomId = Ulid.NewUlid();
 
         // Act
-        var response = await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{randomId}");
+        var response = await client.SendAsync(ProductTestDataHelper.DeleteRequest(randomId));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -116,7 +117,7 @@ public class DeleteProductEndpointTests
         db.SaveChanges();
 
         // Act
-        await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{product1.Id.Value}");
+        await client.SendAsync(ProductTestDataHelper.DeleteRequest(product1.Id.Value));
 
         // Assert
         var remaining = await db.Products.FindAsync(product2.Id);
@@ -146,12 +147,12 @@ public class DeleteProductEndpointTests
             await db.SaveChangesAsync();
         }
 
-        // Delete once
-        var firstResponse = await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{productId.Value}");
+        // Delete once 
+        var firstResponse = await client.SendAsync(ProductTestDataHelper.DeleteRequest(productId.Value));
         firstResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Act - Try to delete again
-        var response = await client.DeleteAsync($"{TestConstants.ProductsEndpoint}/{productId.Value}");
+        var response = await client.SendAsync(ProductTestDataHelper.DeleteRequest(productId.Value));
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

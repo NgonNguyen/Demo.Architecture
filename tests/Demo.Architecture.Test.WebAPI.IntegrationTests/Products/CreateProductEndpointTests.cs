@@ -3,6 +3,7 @@ using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
+using Demo.Architecture.Test.Shared.Helpers.Products;
 using Demo.Architecture.Test.Shared.Web;
 using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.WebAPI.Features.Products.Create;
@@ -107,7 +108,7 @@ public class CreateProductEndpointTests
 
         var command = new CreateProductCommand(TestConstants.ValidProductNameA, TestConstants.ValidPriceA);
 
-        var response = await client.PostAsJsonAsync(TestConstants.ProductsEndpoint, command);
+        var response = await client.SendAsync(ProductTestDataHelper.CreateRequest(command));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
@@ -123,12 +124,11 @@ public class CreateProductEndpointTests
         var client = factory.CreateClient();
 
         var command = new CreateProductCommand(string.Empty, 0);
-
-        var response = await client.PostAsJsonAsync(TestConstants.ProductsEndpoint, command);
+        var response = await client.SendAsync(ProductTestDataHelper.CreateRequest(command));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var problem = await response.Content.ReadFromJsonAsync<Microsoft.AspNetCore.Mvc.ProblemDetails>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
 
         problem.Should().NotBeNull();
         problem!.Title.Should().Be("Validation Error");
@@ -162,11 +162,11 @@ public class CreateProductEndpointTests
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
-        await client.PostAsJsonAsync(TestConstants.ProductsEndpoint,
-            new CreateProductCommand("ExistingName", 100));
+        var firstCommand = new CreateProductCommand("ExistingName", 100);
+        await client.SendAsync(ProductTestDataHelper.CreateRequest(firstCommand));
 
-        var command = new CreateProductCommand("ExistingName", 200);
-        var response = await client.PostAsJsonAsync(TestConstants.ProductsEndpoint, command);
+        var secondCommand = new CreateProductCommand("ExistingName", 200);
+        var response = await client.SendAsync(ProductTestDataHelper.CreateRequest(secondCommand, Ulid.NewUlid().ToString()));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
@@ -185,6 +185,39 @@ public class CreateProductEndpointTests
             e.Field == nameof(Product.Name) &&
             e.Message == ProductErrors.DuplicatedName.Message &&
             e.Code == ProductErrors.DuplicatedName.Code);
+    }
+
+    // ---------------- Idempotency ----------------
+
+    [Test]
+    public async Task Should_Return_Same_Response_When_Same_IdempotencyKey_And_Request()
+    {
+        var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        var command = new CreateProductCommand(
+            TestConstants.ValidProductNameA,
+            TestConstants.ValidPriceA);
+
+        var idempotencyKey = Ulid.NewUlid().ToString();
+
+        // First request
+        var first = await client.SendAsync(ProductTestDataHelper.CreateRequest(command, idempotencyKey));
+
+        // Second request (same key + same payload)
+        var second = await client.SendAsync(ProductTestDataHelper.CreateRequest(command, idempotencyKey));
+
+        // ✅ Both should succeed
+        first.StatusCode.Should().Be(HttpStatusCode.OK);
+        second.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var id1 = await first.Content.ReadFromJsonAsync<Ulid>(
+            Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
+
+        var id2 = await second.Content.ReadFromJsonAsync<Ulid>(
+            Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
+
+        id1.Should().Be(id2);
     }
 }
 
