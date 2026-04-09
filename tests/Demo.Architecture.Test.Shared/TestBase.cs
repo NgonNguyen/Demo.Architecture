@@ -1,5 +1,6 @@
 ﻿using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Test.Shared.Fixtures;
+using Demo.Architecture.UseCases.Common.Interfaces;
 using NUnit.Framework;
 
 namespace Demo.Architecture.Test.Shared;
@@ -7,6 +8,9 @@ namespace Demo.Architecture.Test.Shared;
 public abstract class TestBase
 {
     protected AppDbContext Context = default!;
+    protected IApplicationDbContext WriteContext => Context;
+    protected IReadOnlyApplicationDbContext ReadContext => Context;
+
     private DatabaseFixture _fixture = default!;
 
     [SetUp]

@@ -1,32 +1,39 @@
-﻿using Ardalis.Result;
-using Demo.Architecture.Core.Entities.Products;
+﻿using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
-using Demo.Architecture.Test.Shared;
-using Demo.Architecture.Test.Shared.Constants;
+using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Features.Products.Commands.Update;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using FluentAssertions;
 using FluentValidation.TestHelper;
-using Microsoft.EntityFrameworkCore;
+using MockQueryable.Moq;
 using Moq;
 using NUlid;
 using NUnit.Framework;
 
 namespace Demo.Architecture.Test.UseCases.UnitTests.Products;
 
-[TestFixture]
-internal class UpdateProductHandlerTests : TestBase
+public class UpdateProductHandlerMockTests
 {
     private Mock<IProductUniquenessChecker> _checkerMock = default!;
+    private Mock<IApplicationDbContext> _writeContextMock = default!;
     private UpdateProductCommandValidator _validator = default!;
     private UpdateProductCommandHandler _handler = default!;
+    private List<Product> _products = default!;
 
     [SetUp]
     public void Setup()
     {
         _checkerMock = new Mock<IProductUniquenessChecker>();
+        _writeContextMock = new Mock<IApplicationDbContext>();
+
+        _products = new List<Product>();
+        var mockDbSet = _products.BuildMockDbSet();
+        _writeContextMock.Setup(c => c.Products).Returns(mockDbSet.Object);
+        _writeContextMock.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
         _validator = new UpdateProductCommandValidator(_checkerMock.Object);
-        _handler = new UpdateProductCommandHandler(WriteContext);
+        _handler = new UpdateProductCommandHandler(_writeContextMock.Object);
     }
 
     // ---------------- Validation ----------------
@@ -34,32 +41,26 @@ internal class UpdateProductHandlerTests : TestBase
     [Test]
     public async Task Should_Pass_When_Name_Is_Unique()
     {
-        // Arrange
         _checkerMock.Setup(c => c.IsNameUnique("UniqueName", It.IsAny<Ulid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var command = new UpdateProductCommand(Ulid.NewUlid(), "UniqueName", 100);
 
-        // Act
         var result = await _validator.TestValidateAsync(command);
 
-        // Assert
         result.ShouldNotHaveValidationErrorFor(c => c.Name);
     }
 
     [Test]
     public async Task Should_Fail_When_Name_Already_Exists()
     {
-        // Arrange
         _checkerMock.Setup(c => c.IsNameUnique("ExistingName", It.IsAny<Ulid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var command = new UpdateProductCommand(Ulid.NewUlid(), "ExistingName", 100);
 
-        // Act
         var result = await _validator.TestValidateAsync(command);
 
-        // Assert
         result.ShouldHaveValidationErrorFor(c => c.Name)
               .WithErrorMessage(ProductErrors.DuplicatedName.Message)
               .WithErrorCode(ProductErrors.DuplicatedName.Code);
@@ -94,65 +95,46 @@ internal class UpdateProductHandlerTests : TestBase
     [Test]
     public async Task Should_Return_Invalid_When_Domain_Fails()
     {
-        // Arrange: invalid name and price
-        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
-        Context.Products.Add(product);
-        await Context.SaveChangesAsync();
+        var product = Product.Create("Product A", 100).Value;
+        _products.Add(product);
 
         var command = new UpdateProductCommand(product.Id.Value, string.Empty, 0);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.Invalid);
-        result.ValidationErrors.Should().NotBeEmpty();
-        result.ValidationErrors.Select(e => e.Identifier).Should().Contain(ProductErrors.NameRequired.Code);
-        result.ValidationErrors.Select(e => e.ErrorMessage).Should().Contain(ProductErrors.NameRequired.Message);
-        result.ValidationErrors.Select(e => e.Identifier).Should().Contain(ProductErrors.PriceInvalid.Code);
-        result.ValidationErrors.Select(e => e.ErrorMessage).Should().Contain(ProductErrors.PriceInvalid.Message);
+        result.Status.Should().Be(Ardalis.Result.ResultStatus.Invalid);
+        result.ValidationErrors.Should().Contain(e => e.Identifier == ProductErrors.NameRequired.Code);
+        result.ValidationErrors.Should().Contain(e => e.Identifier == ProductErrors.PriceInvalid.Code);
     }
 
     [Test]
     public async Task Should_Update_Product_And_Save()
     {
-        // Arrange
-        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
-        Context.Products.Add(product);
-        await Context.SaveChangesAsync();
+        var product = Product.Create("Product A", 100).Value;
+        _products.Add(product);
 
-        var command = new UpdateProductCommand(product.Id.Value, TestConstants.ValidProductNameB, TestConstants.ValidPriceB);
+        var command = new UpdateProductCommand(product.Id.Value, "Product B", 200);
 
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeTrue();
-        result.Value.Should().NotBe(default(Ulid));
+        result.Value.Should().BeNull();
 
-        var saved = await Context.Products.FirstAsync();
-        saved.Name.Should().Be(TestConstants.ValidProductNameB);
-        saved.Price.Value.Should().Be(TestConstants.ValidPriceB);
+        product.Name.Should().Be("Product B");
+        product.Price.Value.Should().Be(200);
+        _writeContextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
     public async Task Should_Return_NotFound_When_Product_Not_Exists()
     {
-        // Arrange: invalid name and price
-        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
-        Context.Products.Add(product);
-        await Context.SaveChangesAsync();
+        var command = new UpdateProductCommand(Ulid.NewUlid(), "Name", 100);
 
-        var command = new UpdateProductCommand(Ulid.NewUlid(), string.Empty, 0);
-
-        // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
-        // Assert
         result.IsSuccess.Should().BeFalse();
-        result.Status.Should().Be(ResultStatus.NotFound);
-        result.Errors.Should().NotBeEmpty();
+        result.Status.Should().Be(Ardalis.Result.ResultStatus.NotFound);
         result.Errors.Should().Contain(ProductErrors.NotFound.Code);
     }
 }

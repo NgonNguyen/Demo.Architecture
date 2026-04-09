@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Demo.Architecture.UseCases.Features.Products.Queries.GetById;
 
-public class GetProductByIdHandler(IApplicationDbContext context)
+public class GetProductByIdHandler(IReadOnlyApplicationDbContext context)
     : IRequestHandler<GetProductByIdQuery, Result<GetProductByIdResponse>>
 {
     public async Task<Result<GetProductByIdResponse>> Handle(

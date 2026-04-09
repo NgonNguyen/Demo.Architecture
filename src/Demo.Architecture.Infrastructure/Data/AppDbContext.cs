@@ -5,14 +5,16 @@ using Demo.Architecture.UseCases.Common.Interfaces;
 
 namespace Demo.Architecture.Infrastructure.Data;
 
-public class AppDbContext : DbContext, IApplicationDbContext
+public class AppDbContext : DbContext, IApplicationDbContext, IReadOnlyApplicationDbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
       : base(options) { }
 
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
-    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    IQueryable<Product> IReadOnlyApplicationDbContext.Products => Set<Product>().AsNoTracking();
+    IQueryable<Order> IReadOnlyApplicationDbContext.Orders => Set<Order>().AsNoTracking();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

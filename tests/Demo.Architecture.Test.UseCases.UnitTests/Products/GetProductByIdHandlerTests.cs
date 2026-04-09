@@ -17,7 +17,7 @@ public class GetProductByIdHandlerTests : TestBase
     [SetUp]
     public void Setup()
     {
-        _handler = new GetProductByIdHandler(Context);
+        _handler = new GetProductByIdHandler(ReadContext);
     }
 
     [Test]

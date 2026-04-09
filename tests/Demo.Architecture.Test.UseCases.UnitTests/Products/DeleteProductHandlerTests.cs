@@ -16,7 +16,7 @@ public class DeleteProductHandlerTests : TestBase
     [SetUp]
     public void Setup()
     {
-        _handler = new DeleteProductCommandHandler(Context);
+        _handler = new DeleteProductCommandHandler(WriteContext);
     }
 
     [Test]
@@ -95,14 +95,4 @@ public class DeleteProductHandlerTests : TestBase
         remaining.Should().NotBeNull();
         remaining!.IsActive.Should().BeTrue();
     }
-    //    var result = await _handler.Handle(command, CancellationToken.None);
-
-    //    // Assert
-    //    result.IsSuccess.Should().BeTrue();
-
-    //    Context.Products.Received(1).Remove(product);
-
-    //    await Context.Received(1)
-    //        .SaveChangesAsync(Arg.Any<CancellationToken>());
-    //}
 }

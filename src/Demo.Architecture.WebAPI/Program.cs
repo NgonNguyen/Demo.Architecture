@@ -61,8 +61,8 @@ if (!builder.Environment.IsEnvironment("Test"))
 // Database (SQLite)
 // -----------------------------
 
-builder.Services.AddScoped<IApplicationDbContext>(sp =>
-    sp.GetRequiredService<AppDbContext>());
+builder.Services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
+builder.Services.AddScoped<IReadOnlyApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
 var dbPath = Path.Combine(builder.Environment.ContentRootPath, "Data", "app.db");
 

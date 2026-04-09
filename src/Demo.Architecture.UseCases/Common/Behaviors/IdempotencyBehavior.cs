@@ -1,5 +1,4 @@
-﻿using Demo.Architecture.Shared.Serialization;
-using Demo.Architecture.UseCases.Common.Attributes;
+﻿using Demo.Architecture.UseCases.Common.Attributes;
 using Demo.Architecture.UseCases.Common.Errors;
 using Demo.Architecture.UseCases.Common.Factories;
 using Demo.Architecture.UseCases.Common.Idempotency;

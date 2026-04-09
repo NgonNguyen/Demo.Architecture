@@ -6,7 +6,7 @@ using AppModels = Demo.Architecture.UseCases.Common.Models;
 
 namespace Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 
-public class GetListProductsHandler(IApplicationDbContext context)
+public class GetListProductsHandler(IReadOnlyApplicationDbContext context)
     : IRequestHandler<GetListProductsQuery, Result<AppModels.PagedResult<GetListProductsResponse>>>
 {
     public async Task<Result<AppModels.PagedResult<GetListProductsResponse>>> Handle(
