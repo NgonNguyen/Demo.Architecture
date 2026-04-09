@@ -12,7 +12,9 @@ public sealed record GetProductByIdQuery(
     ProductId Id
 ) : IRequest<Result<GetProductByIdResponse>>, ICacheableQuery
 {
-    public string CacheKey => $"product:{Id}";
+    public string CachePrefix => "product";
+
+    public string CacheKey => $"{CachePrefix}:{Id}";
 
     public TimeSpan? Expiration => TimeSpan.FromMinutes(10);
 }
