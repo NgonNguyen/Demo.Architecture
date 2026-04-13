@@ -21,15 +21,18 @@ public class RedisIdempotencyService : IIdempotencyService
         return JsonSerializer.Deserialize<IdempotencyRecord>((string)value!);
     }
 
-    public async Task<bool> TryAcquireLockAsync(string key, TimeSpan expiry)
+    public async Task<(bool Acquired, string Token)> TryAcquireLockAsync(string key, TimeSpan expiry)
     {
         var lockKey = $"lock:{key}";
+        var token = Guid.NewGuid().ToString();
 
-        return await _db.StringSetAsync(
+        var acquired = await _db.StringSetAsync(
             lockKey,
-            "1",
+            token,
             expiry,
             When.NotExists);
+
+        return (acquired, token);
     }
 
     public async Task SaveAsync(string key, IdempotencyRecord record, TimeSpan ttl)
@@ -39,9 +42,23 @@ public class RedisIdempotencyService : IIdempotencyService
         await _db.StringSetAsync(key, json, ttl);
     }
 
-    public async Task ReleaseLockAsync(string key)
+    public async Task<bool> ReleaseLockAsync(string key, string token)
     {
         var lockKey = $"lock:{key}";
-        await _db.KeyDeleteAsync(lockKey);
+
+        var script = @"
+        if redis.call('get', KEYS[1]) == ARGV[1]
+        then
+            return redis.call('del', KEYS[1])
+        else
+            return 0
+        end";
+
+        var result = (long)await _db.ScriptEvaluateAsync(
+            script,
+            new RedisKey[] { lockKey },
+            new RedisValue[] { token });
+
+        return result == 1;
     }
 }

@@ -91,8 +91,8 @@ public class IdempotencyBehavior<TRequest, TResponse>
         }
 
         // 2. Acquire distributed lock
-        var locked = await _service.TryAcquireLockAsync(scopedKey, _options.LockTtl);
-        if (!locked)
+        var (acquired, token) = await _service.TryAcquireLockAsync(scopedKey, _options.LockTtl);
+        if (!acquired)
         {
             var errors = new[]
                 {
@@ -128,7 +128,7 @@ public class IdempotencyBehavior<TRequest, TResponse>
         }
         finally
         {
-            await _service.ReleaseLockAsync(scopedKey);
+            await _service.ReleaseLockAsync(scopedKey, token);
         }
     }
 

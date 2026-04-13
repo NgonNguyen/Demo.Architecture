@@ -158,7 +158,7 @@ public class IdempotencyBehaviorTests
             .ReturnsAsync((IdempotencyRecord?)null);
 
         _service.Setup(x => x.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>()))
-            .ReturnsAsync(false);
+            .ReturnsAsync((false, string.Empty));
 
         var result = await behavior.Handle(
             new TestRequest("A"),
@@ -172,6 +172,7 @@ public class IdempotencyBehaviorTests
     public async Task Should_Execute_And_Save_When_Lock_Acquired()
     {
         var behavior = CreateBehavior();
+        var token = "test-token"; // ✅ avoid magic string duplication
 
         _http.Setup(x => x.HttpContext)
             .Returns(CreateHttpContext("key-1"));
@@ -180,7 +181,7 @@ public class IdempotencyBehaviorTests
             .ReturnsAsync((IdempotencyRecord?)null);
 
         _service.Setup(x => x.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync((true, token));
 
         var saved = false;
 
@@ -205,6 +206,8 @@ public class IdempotencyBehaviorTests
     {
         var behavior = CreateBehavior();
 
+        const string token = "test-token";
+
         _http.Setup(x => x.HttpContext)
             .Returns(CreateHttpContext("key-1"));
 
@@ -212,20 +215,20 @@ public class IdempotencyBehaviorTests
             .ReturnsAsync((IdempotencyRecord?)null);
 
         _service.Setup(x => x.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>()))
-            .ReturnsAsync(true);
+            .ReturnsAsync((true, token)); // ✅ updated
 
-        var released = false;
-
-        _service.Setup(x => x.ReleaseLockAsync(It.IsAny<string>()))
-            .Callback(() => released = true)
-            .Returns(Task.CompletedTask);
+        _service.Setup(x => x.ReleaseLockAsync(It.IsAny<string>(), token))
+            .ReturnsAsync(true); // ✅ updated
 
         await behavior.Handle(
             new TestRequest("A"),
             ct => Task.FromResult(Result.Success(Ulid.NewUlid())),
             CancellationToken.None);
 
-        released.Should().BeTrue();
+        // ✅ verify release ALWAYS happens
+        _service.Verify(
+            x => x.ReleaseLockAsync(It.IsAny<string>(), token),
+            Times.Once);
     }
 }
 
@@ -233,141 +236,3 @@ public record TestRequest(string Name) : IRequest<Result<Ulid>>;
 
 [RequireIdempotency]
 public record RequiredRequest(string Name) : IRequest<Result<Ulid>>;
-
-//public class IdempotencyBehaviorTests
-//{
-//    private readonly Mock<IIdempotencyService> _service = new();
-//    private readonly Mock<IHttpContextAccessor> _httpContext = new();
-
-//    private readonly IdempotencyBehavior<CreateProductCommand, Result<Ulid>> _behavior;
-
-//    public IdempotencyBehaviorTests()
-//    {
-//        _httpContext.Setup(x => x.HttpContext)
-//            .Returns(new DefaultHttpContext());
-
-//        _behavior = new IdempotencyBehavior<CreateProductCommand, Result<Ulid>>(
-//            _service.Object,
-//            _httpContext.Object,
-//            Options.Create(new IdempotencyOptions())
-//        );
-//    }
-
-//    [Test]
-//    public async Task Should_Call_Next_When_IdempotencyKey_Missing()
-//    {
-//        var nextCalled = false;
-
-//        Task<Result<Ulid>> Next()
-//        {
-//            nextCalled = true;
-//            return Task.FromResult(Result.Success(Ulid.NewUlid()));
-//        }
-
-//        var result = await _behavior.Handle(
-//            new CreateProductCommand("A", 100),
-//            Next,
-//            CancellationToken.None);
-
-//        nextCalled.Should().BeTrue();
-//    }
-
-//    [Test]
-//    public async Task Should_Return_Cached_Response_When_Request_Replayed()
-//    {
-//        var cached = new Result<Ulid>(Ulid.NewUlid());
-
-//        _service.Setup(x => x.GetAsync(It.IsAny<string>()))
-//            .ReturnsAsync(new IdempotencyRecord
-//            {
-//                RequestHash = "same-hash",
-//                ResponseJson = JsonSerializer.Serialize(cached, Architecture.Shared.Serialization.JsonSerializerDefaults.Options)
-//            });
-
-//        var context = new DefaultHttpContext();
-//        context.Request.Headers["Idempotency-Key"] = "test";
-
-//        _httpContext.Setup(x => x.HttpContext).Returns(context);
-
-//        var result = await _behavior.Handle(
-//            new CreateProductCommand("A", 100),
-//            () => throw new Exception("Should not be called"),
-//            CancellationToken.None);
-
-//        result.Value.Should().Be(cached.Value);
-//    }
-
-//    [Test]
-//    public async Task Should_Return_Invalid_When_Same_Key_Different_Payload()
-//    {
-//        _service.Setup(x => x.GetAsync(It.IsAny<string>()))
-//            .ReturnsAsync(new IdempotencyRecord
-//            {
-//                RequestHash = "old-hash"
-//            });
-
-//        var context = new DefaultHttpContext();
-//        context.Request.Headers["Idempotency-Key"] = "test";
-
-//        _httpContext.Setup(x => x.HttpContext).Returns(context);
-
-//        var result = await _behavior.Handle(
-//            new CreateProductCommand("A", 100),
-//            () => throw new Exception(),
-//            CancellationToken.None);
-
-//        result.Status.Should().Be(ResultStatus.Invalid);
-//    }
-
-//    [Test]
-//    public async Task Should_Return_InProgress_When_Lock_Not_Acquired()
-//    {
-//        _service.Setup(x => x.GetAsync(It.IsAny<string>()))
-//            .ReturnsAsync((IdempotencyRecord?)null);
-
-//        _service.Setup(x => x.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>()))
-//            .ReturnsAsync(false);
-
-//        var context = new DefaultHttpContext();
-//        context.Request.Headers["Idempotency-Key"] = "test";
-
-//        _httpContext.Setup(x => x.HttpContext).Returns(context);
-
-//        var result = await _behavior.Handle(
-//            new CreateProductCommand("A", 100),
-//            () => throw new Exception(),
-//            CancellationToken.None);
-
-//        result.Status.Should().Be(ResultStatus.Invalid);
-//    }
-
-//    [Test]
-//    public async Task Should_Call_Next_When_Lock_Acquired()
-//    {
-//        _service.Setup(x => x.GetAsync(It.IsAny<string>()))
-//            .ReturnsAsync((IdempotencyRecord?)null);
-
-//        _service.Setup(x => x.TryAcquireLockAsync(It.IsAny<string>(), It.IsAny<TimeSpan>()))
-//            .ReturnsAsync(true);
-
-//        var context = new DefaultHttpContext();
-//        context.Request.Headers["Idempotency-Key"] = "test";
-
-//        _httpContext.Setup(x => x.HttpContext).Returns(context);
-
-//        var nextCalled = false;
-
-//        Task<Result<Ulid>> Next()
-//        {
-//            nextCalled = true;
-//            return Task.FromResult(Result.Success(Ulid.NewUlid()));
-//        }
-
-//        await _behavior.Handle(
-//            new CreateProductCommand("A", 100),
-//            Next,
-//            CancellationToken.None);
-
-//        nextCalled.Should().BeTrue();
-//    }
-//}
