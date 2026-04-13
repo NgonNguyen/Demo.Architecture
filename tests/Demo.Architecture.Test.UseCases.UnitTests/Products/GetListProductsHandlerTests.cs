@@ -4,6 +4,8 @@ using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Seeders;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 
 namespace Demo.Architecture.Test.UseCases.UnitTests.Products;
@@ -12,11 +14,13 @@ namespace Demo.Architecture.Test.UseCases.UnitTests.Products;
 public class GetListProductsHandlerTests : TestBase
 {
     private GetListProductsHandler _handler = default!;
+    private Mock<ILogger<GetListProductsHandler>> _mockLogger = default!;
 
     [SetUp]
     public void Setup()
     {
-        _handler = new GetListProductsHandler(ReadContext);
+        _mockLogger = new Mock<ILogger<GetListProductsHandler>>();
+        _handler = new GetListProductsHandler(ReadContext, _mockLogger.Object);
     }
 
     // ---------------- BASIC ----------------

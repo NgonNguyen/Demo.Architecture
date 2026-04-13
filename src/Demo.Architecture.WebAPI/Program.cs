@@ -1,6 +1,7 @@
 using Demo.Architecture.Infrastructure.Caching;
 using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Infrastructure.Features.Products;
+using Demo.Architecture.Infrastructure.Observability;
 using Demo.Architecture.Shared.Serialization;
 using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Interfaces;
@@ -13,10 +14,43 @@ using Demo.Architecture.WebAPI.OpenApi.Processors;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using Prometheus;
+using Serilog;
 using StackExchange.Redis;
 using System.Text.Json;
 
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.Seq("http://localhost:5341")
+    .WriteTo.Console()
+    .CreateLogger();
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog();
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(serviceName: "web-api"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddSource("Demo.Architecture")
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.RecordException = true;
+            })
+            .AddEntityFrameworkCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter(o =>
+            {
+                o.Endpoint = new Uri("http://localhost:4317");
+            })
+            .AddConsoleExporter();
+    });
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
@@ -51,7 +85,10 @@ builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 if (!builder.Environment.IsEnvironment("Test"))
 {
-    builder.Services.AddIdempotency();
+    builder.Services.AddIdempotency();  
+    builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TracingBehavior<,>));
+    builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+    builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(MetricsBehavior<,>));
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
     builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(CacheInvalidationBehavior<,>));
@@ -107,6 +144,9 @@ builder.Services.AddOpenTelemetry();
 
 // -----------------------------
 var app = builder.Build();
+
+app.UseHttpMetrics();
+app.MapMetrics();
 
 // -----------------------------
 // Middleware

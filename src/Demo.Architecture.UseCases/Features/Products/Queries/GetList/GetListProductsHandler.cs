@@ -2,17 +2,21 @@
 using Demo.Architecture.UseCases.Common.Specifications;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NUnit.Framework.Internal;
 using AppModels = Demo.Architecture.UseCases.Common.Models;
 
 namespace Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 
-public class GetListProductsHandler(IReadOnlyApplicationDbContext context)
+public class GetListProductsHandler(IReadOnlyApplicationDbContext context,
+    ILogger<GetListProductsHandler> logger)
     : IRequestHandler<GetListProductsQuery, Result<AppModels.PagedResult<GetListProductsResponse>>>
 {
     public async Task<Result<AppModels.PagedResult<GetListProductsResponse>>> Handle(
         GetListProductsQuery request,
         CancellationToken cancellationToken)
     {
+        logger.LogInformation("{Request}", request);
         var spec = new GetListProductsSpecification(request.SearchTerm, request.Sort);
 
         var query = context.Products

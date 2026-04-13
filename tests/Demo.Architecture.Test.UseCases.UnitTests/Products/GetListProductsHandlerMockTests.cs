@@ -2,6 +2,7 @@
 using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using MockQueryable.Moq;
 using Moq;
 using NUnit.Framework;
@@ -14,6 +15,7 @@ public class GetListProductsHandlerMockTests
     private Mock<IReadOnlyApplicationDbContext> _mockContext = default!;
     private GetListProductsHandler _handler = default!;
     private List<Product> _products = default!;
+    private Mock<ILogger<GetListProductsHandler>> _mockLogger = default!;
 
     [SetUp]
     public void Setup()
@@ -27,8 +29,9 @@ public class GetListProductsHandlerMockTests
         };
         var mockDbSet = _products.BuildMockDbSet();
         _mockContext.Setup(c => c.Products).Returns(mockDbSet.Object);
+        _mockLogger = new Mock<ILogger<GetListProductsHandler>>();
 
-        _handler = new GetListProductsHandler(_mockContext.Object);
+        _handler = new GetListProductsHandler(_mockContext.Object, _mockLogger.Object);
     }
 
     // ---------------- BASIC ----------------
