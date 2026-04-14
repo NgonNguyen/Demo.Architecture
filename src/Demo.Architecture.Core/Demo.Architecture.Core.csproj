@@ -16,6 +16,7 @@
     <PackageReference Include="Ardalis.Result" Version="10.1.0" />
     <PackageReference Include="Ardalis.SharedKernel" Version="5.0.0" />
     <PackageReference Include="FluentAssertions" Version="8.9.0" />
+    <PackageReference Include="MediatR" Version="14.1.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
     <PackageReference Include="NUlid" Version="1.7.3" />
     <PackageReference Include="NUnit" Version="4.5.1" />

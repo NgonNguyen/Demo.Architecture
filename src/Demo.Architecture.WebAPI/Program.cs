@@ -3,9 +3,9 @@ using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Infrastructure.Features.Products;
 using Demo.Architecture.Infrastructure.Observability;
 using Demo.Architecture.Shared.Serialization;
+using Demo.Architecture.UseCases;
 using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Interfaces;
-using Demo.Architecture.UseCases.Features.Products.Queries.GetList;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using Demo.Architecture.WebAPI.Common.Endpoints;
 using Demo.Architecture.WebAPI.Configurations;
@@ -68,7 +68,7 @@ builder.Services.AddProblemDetails(options =>
 // -----------------------------
 builder.Services.AddMediatR(cfg =>
 {
-    cfg.RegisterServicesFromAssembly(typeof(GetListProductsQuery).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 });
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>

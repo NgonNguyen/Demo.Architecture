@@ -1,11 +1,14 @@
 ﻿using Demo.Architecture.Infrastructure.Data;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace Demo.Architecture.Test.Shared.Fixtures;
 
 internal class DatabaseFixture : IDisposable
 {
     public AppDbContext Context { get; }
+    public Mock<IMediator> MediatorMock { get; }
 
     public DatabaseFixture()
     {
@@ -13,7 +16,9 @@ internal class DatabaseFixture : IDisposable
             .UseSqlite("Filename=:memory:")
             .Options;
 
-        Context = new AppDbContext(options);
+        MediatorMock = new Mock<IMediator>();
+
+        Context = new AppDbContext(options, MediatorMock.Object);
         Context.Database.OpenConnection();
         Context.Database.EnsureCreated();
     }

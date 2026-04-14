@@ -1,5 +1,6 @@
 ﻿using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
+using Demo.Architecture.Core.Events.Products;
 using Demo.Architecture.Test.Shared.Builders;
 using Demo.Architecture.Test.Shared.Constants;
 using FluentAssertions;
@@ -207,5 +208,38 @@ public class ProductTests
         product.Name.Should().Be(originalName);
         product.Price.Should().Be(originalPrice);
         product.IsActive.Should().BeFalse();
+    }
+
+    // ---------------- DOMAIN EVENTS ----------------
+
+    [Test]
+    public void Create_Should_Add_ProductCreatedDomainEvent()
+    {
+        var result = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA);
+        var product = result.Value;
+
+        var domainEvent = product.DomainEvents
+            .OfType<ProductCreatedDomainEvent>()
+            .SingleOrDefault();
+
+        domainEvent.Should().NotBeNull();
+        domainEvent!.Product.Should().Be(product);
+    }
+
+    [Test]
+    public void Update_Should_Add_ProductUpdatedDomainEvent()
+    {
+        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
+
+        product.Update(TestConstants.ValidProductNameB, TestConstants.ValidPriceB);
+
+        var domainEvent = product.DomainEvents
+            .OfType<ProductUpdatedDomainEvent>()
+            .SingleOrDefault();
+
+        domainEvent.Should().NotBeNull();
+        domainEvent!.Name.Should().Be(TestConstants.ValidProductNameB);
+        domainEvent.Price.Should().Be(TestConstants.ValidPriceB);
+        domainEvent.ProductId.Should().Be(product.Id.Value);
     }
 }

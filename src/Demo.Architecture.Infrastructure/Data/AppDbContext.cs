@@ -1,15 +1,21 @@
-﻿using Demo.Architecture.Core.Base.Interfaces;
+﻿using Ardalis.SharedKernel;
+using Demo.Architecture.Core.Base.Interfaces;
 using Demo.Architecture.Core.Entities.Orders;
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.UseCases.Common.Interfaces;
+using MediatR;
 
 namespace Demo.Architecture.Infrastructure.Data;
 
 public class AppDbContext : DbContext, IApplicationDbContext, IReadOnlyApplicationDbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-      : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator)
+      : base(options)
+    {
+        _mediator = mediator;
+    }
 
+    private readonly IMediator _mediator;
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
 
@@ -45,6 +51,31 @@ public class AppDbContext : DbContext, IApplicationDbContext, IReadOnlyApplicati
     public override int SaveChanges()
     {
         return SaveChangesAsync().GetAwaiter().GetResult();
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
+    {
+        var domainEntities = ChangeTracker
+            .Entries<HasDomainEventsBase>()
+            .Where(x => x.Entity.DomainEvents.Any())
+            .Select(x => x.Entity)
+            .ToList();
+
+        var result = await base.SaveChangesAsync(ct);
+
+        foreach (var entity in domainEntities)
+        {
+            var events = entity.DomainEvents.ToArray();
+
+            entity.ClearDomainEvents();
+
+            foreach (var domainEvent in events)
+            {
+                await _mediator.Publish((dynamic)domainEvent, ct);
+            }
+        }
+
+        return result;
     }
 
     private static void SetIsActiveFilter<TEntity>(ModelBuilder modelBuilder)

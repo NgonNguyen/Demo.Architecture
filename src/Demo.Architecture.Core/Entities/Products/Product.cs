@@ -2,6 +2,7 @@
 using Ardalis.SharedKernel;
 using Demo.Architecture.Core.Base;
 using Demo.Architecture.Core.Errors;
+using Demo.Architecture.Core.Events.Products;
 using Demo.Architecture.Core.ValueObjects;
 using Vogen;
 
@@ -38,7 +39,11 @@ public class Product : AppEntityBase<ProductId>, IAggregateRoot
         if (errors.Any())
             return Result.Invalid(errors);
 
-        return Result.Success(new Product(name, price));
+        var newProduct = new Product(name, price);
+
+        newProduct.RegisterDomainEvent(new ProductCreatedDomainEvent(newProduct));
+
+        return Result.Success(newProduct);
     }
 
     public Result Update(string name, decimal price)
@@ -64,6 +69,8 @@ public class Product : AppEntityBase<ProductId>, IAggregateRoot
 
         Name = name;
         Price = Money.From(price);
+
+        RegisterDomainEvent(new ProductUpdatedDomainEvent(Id.Value, Name, Price.Value));
 
         return Result.Success();
     }
