@@ -68,50 +68,7 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 
-// use RabbitMQ.Client directly for the publisher, without MassTransit, to demonstrate the difference between using a library vs. direct implementation
-/*
-builder.Services.AddSingleton<IConnection>(sp =>
-{
-    var factory = new ConnectionFactory()
-    {
-        HostName = "localhost",
-        Port = 5672,
-        UserName = "guest",
-        Password = "guest",
-        DispatchConsumersAsync = true
-    };
 
-    return factory.CreateConnection();
-});
-
-builder.Services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
-
-*/
-
-// MassTransit with RabbitMQ
-builder.Services.AddMassTransit(x =>
-{
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        cfg.Host("localhost", "/", h =>
-        {
-            h.Username("guest");
-            h.Password("guest");
-        });
-
-        cfg.ApplyRoutingKeyAttributes(
-            typeof(IntegrationEventsAssemblyMarker).Assembly
-        );
-
-        cfg.UseRawJsonSerializer();
-
-        cfg.ConfigureJsonSerializerOptions(options =>
-        {
-            options.Converters.Add(new UlidJsonConverter());
-            return options;
-        });
-    });
-});
 
 builder.Services.AddScoped<IIntegrationEventPublisher, MassTransitIntegrationEventPublisher>();
 
@@ -137,6 +94,51 @@ builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 if (!builder.Environment.IsEnvironment("Test"))
 {
+    // use RabbitMQ.Client directly for the publisher, without MassTransit, to demonstrate the difference between using a library vs. direct implementation
+    /*
+    builder.Services.AddSingleton<IConnection>(sp =>
+    {
+        var factory = new ConnectionFactory()
+        {
+            HostName = "localhost",
+            Port = 5672,
+            UserName = "guest",
+            Password = "guest",
+            DispatchConsumersAsync = true
+        };
+
+        return factory.CreateConnection();
+    });
+
+    builder.Services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
+
+    */
+
+    // MassTransit with RabbitMQ
+    builder.Services.AddMassTransit(x =>
+    {
+        x.UsingRabbitMq((context, cfg) =>
+        {
+            cfg.Host("localhost", "/", h =>
+            {
+                h.Username("guest");
+                h.Password("guest");
+            });
+
+            cfg.ApplyRoutingKeyAttributes(
+                typeof(IntegrationEventsAssemblyMarker).Assembly
+            );
+
+            cfg.UseRawJsonSerializer();
+
+            cfg.ConfigureJsonSerializerOptions(options =>
+            {
+                options.Converters.Add(new UlidJsonConverter());
+                return options;
+            });
+        });
+    });
+
     builder.Services.AddIdempotency();  
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TracingBehavior<,>));
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));

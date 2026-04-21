@@ -52,6 +52,11 @@ builder.Services.AddMassTransit(x =>
             typeof(ProductUpdatedIntegrationEvent).Assembly
         );
 
+        cfg.ReceiveEndpoint("inventory-command", e =>
+        {
+            e.ConfigureConsumer<InitializeInventoryConsumer>(context);
+        });
+
         cfg.ConfigureEndpoints(context);
 
         cfg.UseRawJsonSerializer(); // 👈 for multi-language

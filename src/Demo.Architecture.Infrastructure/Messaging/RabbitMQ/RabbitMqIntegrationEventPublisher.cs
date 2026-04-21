@@ -81,6 +81,11 @@ public class RabbitMqIntegrationEventPublisher : IIntegrationEventPublisher
 
         return Task.CompletedTask;
     }
+
+    public Task SendAsync<T>(T message, string queueName, CancellationToken cancellationToken)
+    {
+        return Task.CompletedTask;
+    }
 }
 
 public class IntegrationEventOptions

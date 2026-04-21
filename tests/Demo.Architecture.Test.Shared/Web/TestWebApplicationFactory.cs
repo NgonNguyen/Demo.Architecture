@@ -8,6 +8,7 @@ using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using Demo.Architecture.WebAPI.Configurations;
 using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -15,6 +16,8 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 namespace Demo.Architecture.Test.Shared.Web;
@@ -44,11 +47,34 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IConnectionMultiplexer>();
             services.RemoveAll<IIdempotencyService>();
 
+            services.RemoveAll(typeof(MassTransit.IBus));
+            services.RemoveAll(typeof(MassTransit.IPublishEndpoint));
+            services.RemoveAll(typeof(MassTransit.ISendEndpointProvider));
+            services.RemoveAll(typeof(MassTransit.IBusControl));
+
+            // 🔥 Remove hosted service (very important)
+            services.RemoveAll<IHostedService>();
+
+            // 🔥 Remove health checks (root cause)
+            services.RemoveAll<IHealthCheck>();
+
+            var healthChecks = services
+                .Where(d => d.ServiceType.Name.Contains("HealthCheck"))
+                .ToList();
+
+            foreach (var hc in healthChecks)
+            {
+                if (hc.ImplementationInstance?.ToString()?.Contains("MassTransit") == true ||
+                    hc.ImplementationType?.Name.Contains("MassTransit") == true)
+                {
+                    services.Remove(hc);
+                }
+            }
+
             // ✅ Add MemoryCache
             services.AddMemoryCache();
             
             services.AddSingleton<IIdempotencyService, InMemoryIdempotencyService>();
-            // ;
 
             // ✅ Replace with MemoryCacheService
             services.AddSingleton<ICacheService, MemoryCacheService>();
@@ -59,6 +85,16 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             if (descriptor != null)
                 services.Remove(descriptor);
+
+            services.AddMassTransit(x =>
+            {
+                x.AddConsumers(typeof(Program).Assembly); // or your consumers assembly
+
+                x.UsingInMemory((context, cfg) =>
+                {
+                    cfg.ConfigureEndpoints(context);
+                });
+            });
 
             // 🔥 Shared SQLite connection
             _connection = new SqliteConnection("Filename=:memory:");

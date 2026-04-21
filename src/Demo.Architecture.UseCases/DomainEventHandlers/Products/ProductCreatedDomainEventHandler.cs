@@ -15,6 +15,7 @@ public class ProductCreatedDomainEventHandler(
     {
         logger.LogInformation("[ProductCreatedDomainEvent]  Product created: {ProductId} - {ProductName}", notification.Product.Id, notification.Product.Name);
 
+        // 1️. Publish event (broadcast)
         var integrationEvent = new ProductCreatedIntegrationEvent
         {
             Id = notification.Product.Id.Value,
@@ -24,6 +25,16 @@ public class ProductCreatedDomainEventHandler(
 
         await publisher.PublishAsync(integrationEvent, cancellationToken);
 
-        logger.LogInformation("[ProductCreatedDomainEvent] Published integration event: {IntegrationEventId}", integrationEvent.Id);
+        // 2️. Send command (targeted)
+        var command = new InitializeInventoryCommand
+        {
+            ProductId = notification.Product.Id.Value
+        };
+
+        await publisher.SendAsync(command, "inventory-command", cancellationToken);
+
+        logger.LogInformation(
+           "[ProductCreatedDomainEvent] Published event & sent command for ProductId: {ProductId}",
+           notification.Product.Id);
     }
 }

@@ -46,5 +46,12 @@ public class ProductCreatedDomainEventHandlerTests
                 ),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+
+        _publisher.Verify(p => p.SendAsync(
+           It.Is<InitializeInventoryCommand>(c =>
+               c.ProductId == product.Id.Value),
+           "inventory-command",
+           It.IsAny<CancellationToken>()),
+           Times.Once);
     }
 }

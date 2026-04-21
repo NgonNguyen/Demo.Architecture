@@ -9,6 +9,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Moq;
 using StackExchange.Redis;
 
 namespace Demo.Architecture.Test.Shared.Web;
@@ -40,6 +41,11 @@ public class CachedTestWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
             services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CacheInvalidationBehavior<,>));
+
+            services.RemoveAll<IIntegrationEventPublisher>();
+
+            var mockPublisher = new Mock<IIntegrationEventPublisher>();
+            services.AddSingleton(mockPublisher.Object);
         });
     }
 

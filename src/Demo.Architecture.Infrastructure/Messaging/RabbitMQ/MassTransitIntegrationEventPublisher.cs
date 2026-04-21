@@ -3,19 +3,24 @@ using MassTransit;
 
 namespace Demo.Architecture.Infrastructure.Messaging.RabbitMQ;
 
-public class MassTransitIntegrationEventPublisher : IIntegrationEventPublisher
+public class MassTransitIntegrationEventPublisher
+    (IPublishEndpoint publishEndpoint,
+     ISendEndpointProvider sendEndpointProvider)
+    : IIntegrationEventPublisher
 {
-    private readonly IPublishEndpoint _publishEndpoint;
-
-    public MassTransitIntegrationEventPublisher(IPublishEndpoint publishEndpoint)
-    {
-        _publishEndpoint = publishEndpoint;
-    }
-
     public Task PublishAsync<T>(
         T integrationEvent,
         CancellationToken cancellationToken = default)
     {
-        return _publishEndpoint.Publish(integrationEvent, cancellationToken);
+        return publishEndpoint.Publish(integrationEvent, cancellationToken);
+    }
+
+    public async Task SendAsync<T>(T message, string queueName, CancellationToken cancellationToken)
+    {
+        var endpoint = await sendEndpointProvider.GetSendEndpoint(
+            new Uri($"queue:{queueName}")
+        );
+
+        await endpoint.Send(message, cancellationToken);
     }
 }
