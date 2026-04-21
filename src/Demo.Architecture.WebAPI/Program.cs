@@ -1,6 +1,9 @@
+using Demo.Architecture.Infrastructure;
 using Demo.Architecture.Infrastructure.Caching;
 using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Infrastructure.Features.Products;
+using Demo.Architecture.Infrastructure.Messaging.Extensions;
+using Demo.Architecture.Infrastructure.Messaging.RabbitMQ;
 using Demo.Architecture.Infrastructure.Observability;
 using Demo.Architecture.Shared.Serialization;
 using Demo.Architecture.UseCases;
@@ -12,11 +15,13 @@ using Demo.Architecture.WebAPI.Configurations;
 using Demo.Architecture.WebAPI.Middlewares;
 using Demo.Architecture.WebAPI.OpenApi.Processors;
 using FluentValidation;
+using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
+using RabbitMQ.Client;
 using Serilog;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -62,6 +67,53 @@ builder.Services.AddProblemDetails(options =>
             context.HttpContext.Request.Path;
     };
 });
+
+// use RabbitMQ.Client directly for the publisher, without MassTransit, to demonstrate the difference between using a library vs. direct implementation
+/*
+builder.Services.AddSingleton<IConnection>(sp =>
+{
+    var factory = new ConnectionFactory()
+    {
+        HostName = "localhost",
+        Port = 5672,
+        UserName = "guest",
+        Password = "guest",
+        DispatchConsumersAsync = true
+    };
+
+    return factory.CreateConnection();
+});
+
+builder.Services.AddSingleton<IIntegrationEventPublisher, RabbitMqIntegrationEventPublisher>();
+
+*/
+
+// MassTransit with RabbitMQ
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", h =>
+        {
+            h.Username("guest");
+            h.Password("guest");
+        });
+
+        cfg.ApplyRoutingKeyAttributes(
+            typeof(IntegrationEventsAssemblyMarker).Assembly
+        );
+
+        cfg.UseRawJsonSerializer();
+
+        cfg.ConfigureJsonSerializerOptions(options =>
+        {
+            options.Converters.Add(new UlidJsonConverter());
+            return options;
+        });
+    });
+});
+
+builder.Services.AddScoped<IIntegrationEventPublisher, MassTransitIntegrationEventPublisher>();
 
 // -----------------------------
 // MediatR

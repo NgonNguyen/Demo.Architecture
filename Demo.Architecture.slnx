@@ -4,6 +4,7 @@
     <Project Path="src/Demo.Architecture.Infrastructure/Demo.Architecture.Infrastructure.csproj" Id="418fe4c4-2d1a-48c1-a952-7b474f699c93" />
     <Project Path="src/Demo.Architecture.Shared/Demo.Architecture.Shared.csproj" Id="f8d1ff56-e9e9-4c91-9af6-b9570693b8cc" />
     <Project Path="src/Demo.Architecture.UseCases/Demo.Architecture.UseCases.csproj" Id="6f0540c2-f83b-475c-9cb2-1c3e7a85af98" />
+    <Project Path="src/Demo.Architecture.WebAPI.Consumer/Demo.Architecture.WebAPI.Consumer.csproj" Id="9a63aa81-2367-4889-8688-6797f814a43d" />
     <Project Path="src/Demo.Architecture.WebAPI/Demo.Architecture.WebAPI.csproj" Id="1363ae72-51ff-4b84-a61c-b1983e32b10a" />
   </Folder>
   <Folder Name="/tests/">

@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="Ardalis.Result" Version="10.1.0" />
+    <PackageReference Include="MassTransit" Version="8.0.16" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.0.16" />
     <PackageReference Include="MediatR" Version="14.1.0" />
     <PackageReference Include="NSwag.AspNetCore" Version="14.4.0" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.15.2" />

@@ -1,0 +1,6 @@
+@Demo.Architecture.WebAPI.Consumer_HostAddress = http://localhost:5249
+
+GET {{Demo.Architecture.WebAPI.Consumer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
