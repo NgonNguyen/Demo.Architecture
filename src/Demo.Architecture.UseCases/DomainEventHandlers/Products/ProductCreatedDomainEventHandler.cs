@@ -4,10 +4,10 @@ using Demo.Architecture.UseCases.IntegrationEvents.Products;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
-namespace Demo.Architecture.UseCases.EventHandlers.Products;
+namespace Demo.Architecture.UseCases.DomainEventHandlers.Products;
 
-public class ProductCreatedHandler(
-    ILogger<ProductCreatedHandler> logger,
+public class ProductCreatedDomainEventHandler(
+    ILogger<ProductCreatedDomainEventHandler> logger,
     IIntegrationEventPublisher publisher)
     : INotificationHandler<ProductCreatedDomainEvent>
 {
