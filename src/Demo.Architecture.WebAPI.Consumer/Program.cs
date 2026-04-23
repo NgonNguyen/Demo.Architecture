@@ -2,6 +2,7 @@ using Demo.Architecture.WebAPI.Consumer.Consumers.Products;
 using Demo.Architecture.WebAPI.Consumer.Extensions;
 using Demo.Architecture.WebAPI.Consumer.Fomatters;
 using Demo.Architecture.WebAPI.Consumer.IntegrationEvents;
+using Demo.Architecture.WebAPI.Consumer.Observers;
 using Demo.Architecture.WebAPI.Consumer.Serialization;
 using Demo.Architecture.WebAPI.Consumer.Service;
 using MassTransit;
@@ -54,6 +55,11 @@ builder.Services.AddMassTransit(x =>
 
         cfg.ReceiveEndpoint("inventory-command", e =>
         {
+            e.UseMessageRetry(r =>
+            {
+                r.Interval(3, TimeSpan.FromSeconds(5));
+                r.ConnectRetryObserver(new ConsoleRetryObserver());
+            });
             e.ConfigureConsumer<InitializeInventoryConsumer>(context);
         });
 

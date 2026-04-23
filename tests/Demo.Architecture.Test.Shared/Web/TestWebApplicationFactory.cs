@@ -4,9 +4,7 @@ using Demo.Architecture.Test.Shared.Services;
 using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Idempotency;
 using Demo.Architecture.UseCases.Common.Interfaces;
-using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.UseCases.Features.Products.Rules;
-using Demo.Architecture.WebAPI.Configurations;
 using FluentValidation;
 using MassTransit;
 using MediatR;
@@ -47,10 +45,10 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<IConnectionMultiplexer>();
             services.RemoveAll<IIdempotencyService>();
 
-            services.RemoveAll(typeof(MassTransit.IBus));
-            services.RemoveAll(typeof(MassTransit.IPublishEndpoint));
-            services.RemoveAll(typeof(MassTransit.ISendEndpointProvider));
-            services.RemoveAll(typeof(MassTransit.IBusControl));
+            services.RemoveAll(typeof(IBus));
+            services.RemoveAll(typeof(IPublishEndpoint));
+            services.RemoveAll(typeof(ISendEndpointProvider));
+            services.RemoveAll(typeof(IBusControl));
 
             // 🔥 Remove hosted service (very important)
             services.RemoveAll<IHostedService>();
