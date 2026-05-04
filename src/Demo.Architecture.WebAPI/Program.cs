@@ -31,6 +31,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json;
 
+// This is the entry point of the application, where we configure services, middleware, and the HTTP request pipeline.
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Seq("http://localhost:5341")
