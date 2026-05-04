@@ -2,12 +2,14 @@ using Demo.Architecture.Infrastructure;
 using Demo.Architecture.Infrastructure.Caching;
 using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Infrastructure.Features.Products;
+using Demo.Architecture.Infrastructure.Identity;
 using Demo.Architecture.Infrastructure.Messaging.Extensions;
 using Demo.Architecture.Infrastructure.Messaging.RabbitMQ;
 using Demo.Architecture.Infrastructure.Observability;
 using Demo.Architecture.Shared.Serialization;
 using Demo.Architecture.UseCases;
 using Demo.Architecture.UseCases.Common.Behaviors;
+using Demo.Architecture.UseCases.Common.Identity;
 using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using Demo.Architecture.WebAPI.Common.Endpoints;
@@ -18,12 +20,15 @@ using FluentValidation;
 using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
 using RabbitMQ.Client;
 using Serilog;
 using StackExchange.Redis;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using System.Text.Json;
 
 Log.Logger = new LoggerConfiguration()
@@ -31,6 +36,8 @@ Log.Logger = new LoggerConfiguration()
     .WriteTo.Seq("http://localhost:5341")
     .WriteTo.Console()
     .CreateLogger();
+
+JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,10 +75,102 @@ builder.Services.AddProblemDetails(options =>
     };
 });
 
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = "https://localhost:7182";
 
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = true,
+            ValidAudience = "product-api",
+            RoleClaimType = "role",      // 🔥 THIS LINE FIXES IT
+            NameClaimType = "email"      // (optional, useful)
+        };
+
+        /*options.Authority = "https://localhost:7182"; // AuthServer
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = false // ✅ important for now
+        };*/
+
+        // For basic AuthenServer with token (without username & password) only use token from /connect/token
+        // options.Authority = "https://localhost:7182"; // AuthServer
+        // options.TokenValidationParameters.ValidateAudience = false;
+
+        // For advanced AuthServer with token (login with username & password)
+        /*options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "https://localhost:7182",   // must match issuer in JwtSecurityToken
+
+            ValidateAudience = true,
+            ValidAudience = "webapi",                 // must match audience in JwtSecurityToken
+
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes("this_is_a_very_long_super_secret_key_1234567890")
+            )
+        };*/
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    //options.AddPolicy("ProductScope", policy =>
+    //{
+    //    policy.RequireClaim("scope", "product-api");
+    //});
+
+    options.AddPolicy("ProductScope", policy =>
+    {
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c =>
+                c.Type == "scope" &&
+                c.Value.Split(' ').Contains("product-api")
+            ));
+    });
+
+    options.AddPolicy("AdminOnly", policy =>
+    {
+        policy.RequireRole("Admin");
+    });
+
+    options.AddPolicy("CompanyAdminOnly", policy =>
+        policy.RequireRole("CompanyAdmin"));
+
+    options.AddPolicy("StaffOnly", policy =>
+        policy.RequireRole("Staff"));
+
+    options.AddPolicy("ProductRead", policy =>
+    {
+        policy.RequireClaim("permission", "Product.Read");
+    });
+
+    options.AddPolicy("ProductWrite", policy =>
+    {
+        policy.RequireClaim("permission", "Product.Write");
+    });
+
+    //options.AddPolicy("CompanyOrStaff", policy =>
+    //{
+    //    policy.RequireRole("CompanyAdmin", "Staff");
+    //});
+
+    /*
+    options.AddPolicy("ProductScope", policy =>
+    {
+        policy.RequireClaim("scope", "product-api");
+    });*/
+});
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 builder.Services.AddScoped<IIntegrationEventPublisher, MassTransitIntegrationEventPublisher>();
 
+builder.Services.AddAuthorization();
 // -----------------------------
 // MediatR
 // -----------------------------
@@ -146,6 +245,7 @@ if (!builder.Environment.IsEnvironment("Test"))
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
     builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CachingBehavior<,>));
     builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(CacheInvalidationBehavior<,>));
+    builder.Services.AddScoped(typeof(IPipelineBehavior<,>), typeof(InjectUserInfoBehavior<,>));
 }
 
 // -----------------------------
@@ -207,7 +307,10 @@ app.MapMetrics();
 // -----------------------------
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<UserLoggingMiddleware>();
 
 // -----------------------------
 // NSwag UI

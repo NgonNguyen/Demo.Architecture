@@ -17,7 +17,8 @@ public class DeleteProductEndpoint : IEndpointBuilder
             .WithTags("Products")
             .Produces(StatusCodes.Status204NoContent)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .RequireAuthorization("ProductScope", "ProductWrite");
     }
 
     [OpenApiOperation(

@@ -18,7 +18,9 @@ public class GetProductByIdEndpoint : IEndpointBuilder
             .WithTags("Products")
             .Produces<GetProductByIdResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status404NotFound)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            // .RequireAuthorization("ProductScope", "CompanyAdminOnly")
+            .RequireAuthorization("ProductScope", "ProductRead");
     }
 
     [OpenApiOperation(

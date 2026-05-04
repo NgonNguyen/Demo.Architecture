@@ -1,6 +1,6 @@
 ﻿using Demo.Architecture.UseCases.Common.Attributes;
 using Demo.Architecture.UseCases.Common.Caching;
-using MediatR;
+using Demo.Architecture.UseCases.Common.Messaging.Commands;
 using NUlid;
 using System.ComponentModel;
 
@@ -12,7 +12,7 @@ public record CreateProductCommand(
     string Name,
     [property: Description("Price of product.")]
     decimal Price
-) : IRequest<Result<Ulid>>, ICacheInvalidationCommand
+) : BaseCommand<Result<Ulid>>, ICacheInvalidationCommand
 {
     public IEnumerable<string> CacheKeys =>
         new[]

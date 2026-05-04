@@ -19,7 +19,8 @@ public class CreateProductEndpoint : IEndpointBuilder
             .WithTags("Products")
             .Produces<Ulid>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status500InternalServerError);
+            .ProducesProblem(StatusCodes.Status500InternalServerError)
+            .RequireAuthorization("ProductScope", "ProductWrite");
     }
 
     [OpenApiOperation(

@@ -2,6 +2,7 @@
 using Demo.Architecture.Core.Base.Interfaces;
 using Demo.Architecture.Core.Entities.Orders;
 using Demo.Architecture.Core.Entities.Products;
+using Demo.Architecture.UseCases.Common.Identity;
 using Demo.Architecture.UseCases.Common.Interfaces;
 using MediatR;
 
@@ -9,13 +10,15 @@ namespace Demo.Architecture.Infrastructure.Data;
 
 public class AppDbContext : DbContext, IApplicationDbContext, IReadOnlyApplicationDbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator)
+    public AppDbContext(DbContextOptions<AppDbContext> options, IMediator mediator, ICurrentUser currentUser)
       : base(options)
     {
         _mediator = mediator;
+        _currentUser = currentUser;
     }
 
     private readonly IMediator _mediator;
+    private readonly ICurrentUser _currentUser;
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
 
@@ -55,11 +58,34 @@ public class AppDbContext : DbContext, IApplicationDbContext, IReadOnlyApplicati
 
     public override async Task<int> SaveChangesAsync(CancellationToken ct = default)
     {
+        var now = DateTime.UtcNow;
+
+        var userId = _currentUser?.GetUser()?.UserId ?? "system";
+
         var domainEntities = ChangeTracker
             .Entries<HasDomainEventsBase>()
             .Where(x => x.Entity.DomainEvents.Any())
             .Select(x => x.Entity)
             .ToList();
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.Entity is not IAuditable auditable)
+                continue;
+
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    auditable.CreatedBy = userId;
+                    auditable.CreatedAt = now;
+                    break;
+
+                case EntityState.Modified:
+                    auditable.UpdatedBy = userId;
+                    auditable.UpdatedAt = now;
+                    break;
+            }
+        }
 
         var result = await base.SaveChangesAsync(ct);
 

@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Demo.Architecture.Core/Demo.Architecture.Core.csproj" />
+    <Project Path="src/Demo.Architecture.IdentityServer/Demo.Architecture.IdentityServer.csproj" />
     <Project Path="src/Demo.Architecture.Infrastructure/Demo.Architecture.Infrastructure.csproj" Id="418fe4c4-2d1a-48c1-a952-7b474f699c93" />
     <Project Path="src/Demo.Architecture.Shared/Demo.Architecture.Shared.csproj" Id="f8d1ff56-e9e9-4c91-9af6-b9570693b8cc" />
     <Project Path="src/Demo.Architecture.UseCases/Demo.Architecture.UseCases.csproj" Id="6f0540c2-f83b-475c-9cb2-1c3e7a85af98" />

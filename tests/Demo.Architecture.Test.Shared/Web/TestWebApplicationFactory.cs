@@ -1,8 +1,11 @@
 ﻿using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Infrastructure.Features.Products;
+using Demo.Architecture.Test.Shared.Authentication;
+using Demo.Architecture.Test.Shared.Identity;
 using Demo.Architecture.Test.Shared.Services;
 using Demo.Architecture.UseCases.Common.Behaviors;
 using Demo.Architecture.UseCases.Common.Idempotency;
+using Demo.Architecture.UseCases.Common.Identity;
 using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.Features.Products.Rules;
 using FluentValidation;
@@ -55,6 +58,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
 
             // 🔥 Remove health checks (root cause)
             services.RemoveAll<IHealthCheck>();
+
+            services.AddTestAuthentication();
+            services.AddScoped<ICurrentUser, FakeCurrentUser>();
 
             var healthChecks = services
                 .Where(d => d.ServiceType.Name.Contains("HealthCheck"))

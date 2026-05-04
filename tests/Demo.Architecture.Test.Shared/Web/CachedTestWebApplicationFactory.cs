@@ -1,6 +1,9 @@
 ﻿using Demo.Architecture.Infrastructure.Data;
+using Demo.Architecture.Test.Shared.Authentication;
+using Demo.Architecture.Test.Shared.Identity;
 using Demo.Architecture.Test.Shared.Services;
 using Demo.Architecture.UseCases.Common.Behaviors;
+using Demo.Architecture.UseCases.Common.Identity;
 using Demo.Architecture.UseCases.Common.Interfaces;
 using MediatR;
 using Microsoft.AspNetCore.Hosting;
@@ -35,6 +38,9 @@ public class CachedTestWebApplicationFactory : WebApplicationFactory<Program>
 
             services.RemoveAll<ICacheService>();
             services.RemoveAll<IConnectionMultiplexer>();
+
+            services.AddTestAuthentication();
+            services.AddScoped<ICurrentUser, FakeCurrentUser>();
 
             services.AddMemoryCache();
             services.AddSingleton<ICacheService, MemoryCacheService>();
