@@ -21,6 +21,7 @@ using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Prometheus;
@@ -47,6 +48,14 @@ builder.Host.UseSerilog();
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource
         .AddService(serviceName: "web-api"))
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddAspNetCoreInstrumentation()   // captures request metrics
+            .AddHttpClientInstrumentation()   // captures outgoing HTTP calls
+            .AddRuntimeInstrumentation()      // captures .NET runtime stats
+            .AddPrometheusExporter();         // exposes /metrics endpoint
+    })
     .WithTracing(tracing =>
     {
         tracing
@@ -299,6 +308,8 @@ builder.Services.AddOpenTelemetry();
 
 // -----------------------------
 var app = builder.Build();
+
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 app.UseHttpMetrics();
 app.MapMetrics();
