@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using NUlid;
 using NUnit.Framework;
+using System.Diagnostics;
 
 namespace Demo.Architecture.Test.UseCases.UnitTests.DomainEventHandlers.Products;
 
@@ -32,6 +33,10 @@ public class ProductUpdatedDomainEventHandlerTests
     public async Task Should_Publish_ProductUpdatedIntegrationEvent()
     {
         // Arrange
+        using var activity = new Activity("Test");
+        activity.Start();
+        var expectedTraceId = Guid.Parse(activity.TraceId.ToString());
+
         var domainEvent = new ProductUpdatedDomainEvent(
             productId: Ulid.NewUlid(),
             name: TestConstants.ValidProductNameA,
@@ -49,6 +54,7 @@ public class ProductUpdatedDomainEventHandlerTests
                     e.Name == domainEvent.Name &&
                     e.Price == domainEvent.Price
                 ),
+                expectedTraceId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

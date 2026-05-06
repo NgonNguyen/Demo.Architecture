@@ -52,7 +52,7 @@ public class RabbitMqIntegrationEventPublisher : IIntegrationEventPublisher
         return Task.CompletedTask;
     }
 
-    public Task PublishAsync<T>(T integrationEvent, CancellationToken cancellationToken = default)
+    public Task PublishAsync<T>(T integrationEvent, Guid? traceId = null, CancellationToken cancellationToken = default)
     {
         // Direct
         /*var options = new IntegrationEventOptions

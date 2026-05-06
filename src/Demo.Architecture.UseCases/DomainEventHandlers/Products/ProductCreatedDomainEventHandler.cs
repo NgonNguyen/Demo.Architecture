@@ -3,6 +3,7 @@ using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.IntegrationEvents.Products;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace Demo.Architecture.UseCases.DomainEventHandlers.Products;
 
@@ -13,7 +14,13 @@ public class ProductCreatedDomainEventHandler(
 {
     public async Task Handle(ProductCreatedDomainEvent notification, CancellationToken cancellationToken)
     {
-        logger.LogInformation("[ProductCreatedDomainEvent]  Product created: {ProductId} - {ProductName}", notification.Product.Id, notification.Product.Name);
+        var traceId = Guid.Parse(Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString());
+
+        logger.LogInformation(
+            "[TraceId: {TraceId}] Product created: {ProductId} - {ProductName}",
+            traceId,
+            notification.Product.Id,
+            notification.Product.Name);
 
         // 1️. Publish event (broadcast)
         var integrationEvent = new ProductCreatedIntegrationEvent
@@ -23,7 +30,7 @@ public class ProductCreatedDomainEventHandler(
             Price = notification.Product.Price.Value
         };
 
-        await publisher.PublishAsync(integrationEvent, cancellationToken);
+        await publisher.PublishAsync(integrationEvent, traceId, cancellationToken);
 
         // 2️. Send command (targeted)
         var command = new InitializeInventoryCommand

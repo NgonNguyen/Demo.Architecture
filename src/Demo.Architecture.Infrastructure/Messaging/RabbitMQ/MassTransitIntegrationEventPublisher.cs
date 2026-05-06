@@ -10,9 +10,16 @@ public class MassTransitIntegrationEventPublisher
 {
     public Task PublishAsync<T>(
         T integrationEvent,
+        Guid? traceId = null,
         CancellationToken cancellationToken = default)
     {
-        return publishEndpoint.Publish(integrationEvent, cancellationToken);
+        return publishEndpoint.Publish(integrationEvent, context =>
+        {
+            context.CorrelationId = traceId ?? Guid.NewGuid();
+
+            // optional custom tracing
+            context.Headers.Set("trace-id", context.CorrelationId.ToString());
+        }, cancellationToken);
     }
 
     public async Task SendAsync<T>(T message, string queueName, CancellationToken cancellationToken)

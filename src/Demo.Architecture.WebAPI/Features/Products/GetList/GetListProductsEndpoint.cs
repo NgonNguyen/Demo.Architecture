@@ -20,7 +20,8 @@ public class GetAllProductsEndpoint : IEndpointBuilder
             .Produces<PagedResult<GetListProductsResponse>>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status500InternalServerError)
             // .RequireAuthorization("ProductScope", "AdminOnly")
-            .RequireAuthorization("ProductScope", "ProductRead");
+            .RequireAuthorization("ProductScope", "ProductRead")
+            ;
     }
 
     [OpenApiOperation(

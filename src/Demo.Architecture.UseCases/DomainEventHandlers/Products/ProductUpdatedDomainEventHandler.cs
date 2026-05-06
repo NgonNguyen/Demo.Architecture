@@ -3,6 +3,7 @@ using Demo.Architecture.UseCases.Common.Interfaces;
 using Demo.Architecture.UseCases.IntegrationEvents.Products;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using System.Diagnostics;
 
 namespace Demo.Architecture.UseCases.DomainEventHandlers.Products;
 
@@ -13,8 +14,14 @@ public class ProductUpdatedDomainEventHandler(
 {
     public async Task Handle(ProductUpdatedDomainEvent notification, CancellationToken cancellationToken)
     {
-        logger.LogInformation("[ProductUpdatedDomainEvent] Product with ID {ProductId} has been updated. Name: {Name}, Price: {Price}",
-            notification.ProductId, notification.Name, notification.Price);
+        var traceId = Guid.Parse(Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString());
+
+        logger.LogInformation(
+            "[TraceId: {TraceId}] Product updated: {ProductId} - {ProductName} - {Price}",
+            traceId,
+            notification.ProductId,
+            notification.Name,
+            notification.Price);
 
         var integrationEvent = new ProductUpdatedIntegrationEvent
         {
@@ -23,7 +30,7 @@ public class ProductUpdatedDomainEventHandler(
             Price = notification.Price
         };
 
-        await publisher.PublishAsync(integrationEvent, cancellationToken);
+        await publisher.PublishAsync(integrationEvent, traceId, cancellationToken);
 
         logger.LogInformation("[ProductUpdatedDomainEvent] Published integration event: {IntegrationEventId}", integrationEvent.Id);
     }

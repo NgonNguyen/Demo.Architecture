@@ -7,6 +7,7 @@ using Demo.Architecture.UseCases.IntegrationEvents.Products;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using System.Diagnostics;
 
 namespace Demo.Architecture.Test.UseCases.UnitTests.DomainEventHandlers.Products;
 
@@ -30,7 +31,9 @@ public class ProductCreatedDomainEventHandlerTests
     {
         // Arrange
         var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
-
+        using var activity = new Activity("Test");
+        activity.Start();
+        var expectedTraceId = Guid.Parse(activity.TraceId.ToString());
         var domainEvent = new ProductCreatedDomainEvent(product);
 
         // Act
@@ -44,6 +47,7 @@ public class ProductCreatedDomainEventHandlerTests
                     e.Name == product.Name &&
                     e.Price == product.Price.Value
                 ),
+                expectedTraceId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
