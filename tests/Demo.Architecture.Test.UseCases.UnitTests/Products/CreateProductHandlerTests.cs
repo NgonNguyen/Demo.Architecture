@@ -122,7 +122,7 @@ public class CreateProductHandlerTests : TestBase
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBe(default(Ulid));
 
-        var saved = await Context.Products.FirstAsync();
+        var saved = Context.Products.Local.First(); // checks EF Core change tracker → entity exists there.
         saved.Name.Should().Be(TestConstants.ValidProductNameA);
         saved.Price.Value.Should().Be(TestConstants.ValidPriceA);
         saved.Id.Value.Should().Be(result.Value);

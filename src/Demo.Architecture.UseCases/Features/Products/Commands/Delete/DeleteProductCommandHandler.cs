@@ -23,8 +23,6 @@ public class DeleteProductCommandHandler(IApplicationDbContext context)
 
         product.Deactivate();
 
-        await context.SaveChangesAsync(cancellationToken);
-
         return Result.Success();
     }
 }

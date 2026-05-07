@@ -187,6 +187,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
+    cfg.AddOpenBehavior(typeof(TransactionBehavior<,>));
 });
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>

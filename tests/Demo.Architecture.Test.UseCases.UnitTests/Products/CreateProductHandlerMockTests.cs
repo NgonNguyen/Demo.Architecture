@@ -115,8 +115,7 @@ public class CreateProductHandlerMockTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().NotBe(default);
 
-        // Verify that Add and SaveChanges were called
+        // Verify that Add were called
         mockDbSet.Verify(d => d.Add(It.IsAny<Product>()), Times.Once);
-        _writeContextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

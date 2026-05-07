@@ -123,7 +123,6 @@ public class UpdateProductHandlerMockTests
 
         product.Name.Should().Be("Product B");
         product.Price.Value.Should().Be(200);
-        _writeContextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

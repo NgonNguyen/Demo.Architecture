@@ -25,8 +25,6 @@ public class UpdateProductCommandHandler(IApplicationDbContext context)
         if (!updateResult.IsSuccess)
             return updateResult;
 
-        await context.SaveChangesAsync(cancellationToken);
-
         return Result.Success();
     }
 }

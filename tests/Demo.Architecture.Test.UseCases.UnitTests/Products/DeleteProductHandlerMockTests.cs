@@ -42,7 +42,6 @@ public class DeleteProductHandlerMockTests
         result.Status.Should().Be(Ardalis.Result.ResultStatus.Ok);
 
         product.IsActive.Should().BeFalse();
-        _writeContextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]

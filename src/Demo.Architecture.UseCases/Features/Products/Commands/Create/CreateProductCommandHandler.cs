@@ -21,8 +21,6 @@ public class CreateProductCommandHandler(IApplicationDbContext context)
 
         context.Products.Add(product);
 
-        await context.SaveChangesAsync(cancellationToken);
-
         return Result.Success(product.Id.Value);
     }
 }
