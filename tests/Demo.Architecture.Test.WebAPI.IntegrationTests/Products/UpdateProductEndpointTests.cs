@@ -1,11 +1,12 @@
 ﻿using Ardalis.Result;
 using Demo.Architecture.Core.Entities.Products;
 using Demo.Architecture.Core.Errors;
+using Demo.Architecture.Infrastructure.Data;
 using Demo.Architecture.Test.Shared.Constants;
 using Demo.Architecture.Test.Shared.Helpers;
 using Demo.Architecture.Test.Shared.Helpers.Products;
 using Demo.Architecture.Test.Shared.Web;
-using Demo.Architecture.UseCases.Features.Products.Commands.Create;
+// using Demo.Architecture.UseCases.Features.Products.Commands.Create;
 using Demo.Architecture.UseCases.Features.Products.Commands.Update;
 using Demo.Architecture.WebAPI.Features.Products.Update;
 using FluentAssertions;
@@ -13,6 +14,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using NUlid;
 using NUnit.Framework;
@@ -176,17 +178,16 @@ public class UpdateProductEndpointTests
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
-        // Arrange - create product first
-        var createCommand = new CreateProductCommand(
-            TestConstants.ValidProductNameA,
-            TestConstants.ValidPriceA);
-        var createResponse = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommand));
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var createdId = await createResponse.Content
-            .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
+        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
+
+        db.Products.Add(product);
+        db.SaveChanges();
 
         var updateCommand = new UpdateProductCommand(
-            createdId,
+            product.Id.Value,
             TestConstants.ValidProductNameB,
             TestConstants.ValidPriceB);
 
@@ -202,17 +203,16 @@ public class UpdateProductEndpointTests
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
-        // Arrange - create product first
-        var createCommand = new CreateProductCommand(
-            TestConstants.ValidProductNameA,
-            TestConstants.ValidPriceA);
-        var createResponse = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommand));
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var createdId = await createResponse.Content
-            .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
+        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
+
+        db.Products.Add(product);
+        db.SaveChanges();
 
         var updateCommand = new UpdateProductCommand(
-            createdId,
+            product.Id.Value,
             string.Empty,
             0);
         var updateResponse = await client.SendAsync(ProductTestDataHelper.UpdateRequest(updateCommand));
@@ -252,23 +252,20 @@ public class UpdateProductEndpointTests
         var factory = new TestWebApplicationFactory();
         var client = factory.CreateClient();
 
-        // Arrange - create two products
-        var createCommandA = new CreateProductCommand("ExistingNameA", 100);
-        var createResponseA = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommandA));
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var idA = await createResponseA.Content
-            .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
+        var productA = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
+        var productB = Product.Create(TestConstants.ValidProductNameB, TestConstants.ValidPriceB).Value;
 
-        var createCommandB = new CreateProductCommand("ExistingNameB", 200);
-        var createResponseB = await client.SendAsync(ProductTestDataHelper.CreateRequest(createCommandB));
-
-        var idB = await createResponseB.Content
-            .ReadFromJsonAsync<Ulid>(Architecture.Shared.Serialization.JsonSerializerDefaults.Options);
+        db.Products.Add(productA);
+        db.Products.Add(productB);
+        db.SaveChanges();
 
         // Act - try to update product B to have product A’s name
         var updateCommand = new UpdateProductCommand(
-            idB,
-            "ExistingNameA",
+            productB.Id.Value,
+            productA.Name,
             300);
         var response = await client.SendAsync(ProductTestDataHelper.UpdateRequest(updateCommand));
 
@@ -312,5 +309,41 @@ public class UpdateProductEndpointTests
         var response = await client.SendAsync(ProductTestDataHelper.UpdateRequest(updateCommand));
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // ---------------- Idempotency ----------------
+
+    [Test]
+    public async Task Should_Return_Same_Response_When_Same_IdempotencyKey_And_Request()
+    {
+        var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var product = Product.Create(TestConstants.ValidProductNameA, TestConstants.ValidPriceA).Value;
+
+        db.Products.Add(product);
+        db.SaveChanges();
+
+        var updateCommand = new UpdateProductCommand(
+            product.Id.Value,
+            TestConstants.ValidProductNameB,
+            TestConstants.ValidPriceB);
+
+        var idempotencyKey = Ulid.NewUlid().ToString();
+
+        // First request
+        var first = await client.SendAsync(
+            ProductTestDataHelper.UpdateRequest(updateCommand, idempotencyKey));
+
+        // Second request (same key + same payload)
+        var second = await client.SendAsync(
+            ProductTestDataHelper.UpdateRequest(updateCommand, idempotencyKey));
+
+        first.StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        second.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 }

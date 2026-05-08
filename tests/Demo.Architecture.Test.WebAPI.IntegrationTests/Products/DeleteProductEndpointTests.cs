@@ -84,6 +84,28 @@ public class DeleteProductEndpointTests
     // ---------------- HTTP Client ----------------
 
     [Test]
+    public async Task Should_Return_204_When_Valid()
+    {
+        // Arrange - create product first
+        var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var product = Product.Create("Product 1", 100).Value;
+
+        db.Products.Add(product);
+        db.SaveChanges();
+
+        // Act
+        var response = await client.SendAsync(ProductTestDataHelper.DeleteRequest(product.Id.Value));
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Test]
     public async Task Should_Return_404_When_Product_Not_Found()
     {
         // Arrange
@@ -156,5 +178,37 @@ public class DeleteProductEndpointTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // ---------------- Idempotency ----------------
+
+    [Test]
+    public async Task Should_Return_Same_Response_When_Same_IdempotencyKey_And_Request()
+    {
+        // Arrange
+        var factory = new TestWebApplicationFactory();
+        var client = factory.CreateClient();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var product = Product.Create("Product 1", 100).Value;
+
+        db.Products.Add(product);
+        db.SaveChanges();
+
+        var idempotencyKey = Ulid.NewUlid().ToString();
+
+        // First request
+        var first = await client.SendAsync(
+            ProductTestDataHelper.DeleteRequest(product.Id.Value, idempotencyKey));
+
+        // Second request (same key + same payload)
+        var second = await client.SendAsync(
+            ProductTestDataHelper.DeleteRequest(product.Id.Value, idempotencyKey));
+
+        // Assert
+        first.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        second.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 }
