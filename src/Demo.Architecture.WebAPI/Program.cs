@@ -22,6 +22,7 @@ builder.Services
     .AddAuthorizationPolicies()
     .AddApplicationServices()
     .AddMediatRServices()
+    .AddExternalApis()
     .AddPipelineBehaviors(builder)
     .AddRedisCache(builder.Configuration)
     .AddDatabase(builder)

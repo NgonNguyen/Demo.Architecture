@@ -3,7 +3,6 @@ using Demo.Architecture.UseCases.Common.Specifications;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NUnit.Framework.Internal;
 using AppModels = Demo.Architecture.UseCases.Common.Models;
 
 namespace Demo.Architecture.UseCases.Features.Products.Queries.GetList;
